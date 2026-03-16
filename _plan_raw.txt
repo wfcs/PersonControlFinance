@@ -1,0 +1,1670 @@
+I now have a thorough understanding of the entire codebase and the Pluggy API. Let me compile the complete implementation plan.
+
+---
+
+# VISOR -- Complete Implementation Plan
+
+## Architecture Summary (Current State)
+
+The codebase follows a clean layered architecture:
+
+```
+backend/
+  app/
+    api/v1/        # FastAPI routers (thin controllers)
+    core/          # config.py, deps.py, security.py
+    db/            # session.py (async engine + Base)
+    models/        # SQLAlchemy 2.0 mapped models
+    schemas/       # Pydantic v2 request/response DTOs
+    services/      # Business logic (plain async functions)
+    workers/       # Celery app + tasks
+  migrations/      # Alembic
+  tests/           # pytest-asyncio + httpx AsyncClient
+```
+
+**Key Conventions to Follow:**
+- Services are plain `async def` functions, not classes (except the Pluggy client, which needs state for auth tokens)
+- Every query filters by `tenant_id` for multi-tenant isolation
+- Schemas use `model_config = {"from_attributes": True}` for ORM serialization
+- Tests use SQLite in-memory with `dependency_overrides`
+- `AuthUser` and `DBSession` are `Annotated` type aliases from `deps.py`
+- Soft delete for accounts (`is_active = False`), hard delete for transactions
+- `external_id` on Transaction is `unique=True` and indexed -- critical for Pluggy dedup
+
+---
+
+## PHASE 1 -- Core Backend (Alta Prioridade)
+
+### BE-04: Pluggy Open Finance Integration
+
+This is the foundational task. Everything else in Phase 1 depends on it.
+
+#### 1.1 -- Pluggy API Client (`backend/app/integrations/pluggy_client.py`)
+
+**New file: `backend/app/integrations/__init__.py`** (empty)
+
+**New file: `backend/app/integrations/pluggy_client.py`**
+
+This is the one place where a class is justified -- the client must manage an expiring API key (2-hour TTL) and share it across calls.
+
+```python
+import httpx
+from datetime import datetime, timezone, timedelta
+from app.core.config import settings
+
+PLUGGY_BASE_URL = "https://api.pluggy.ai"
+
+class PluggyClient:
+    """Async wrapper for the Pluggy REST API."""
+
+    def __init__(self) -> None:
+        self._api_key: str | None = None
+        self._api_key_expires_at: datetime | None = None
+        self._http: httpx.AsyncClient = httpx.AsyncClient(
+            base_url=PLUGGY_BASE_URL,
+            timeout=30.0,
+        )
+
+    async def _ensure_api_key(self) -> str:
+        """Authenticate with POST /auth and cache the key for ~1h50m."""
+        now = datetime.now(timezone.utc)
+        if self._api_key and self._api_key_expires_at and now < self._api_key_expires_at:
+            return self._api_key
+        resp = await self._http.post("/auth", json={
+            "clientId": settings.PLUGGY_CLIENT_ID,
+            "clientSecret": settings.PLUGGY_CLIENT_SECRET,
+        })
+        resp.raise_for_status()
+        self._api_key = resp.json()["apiKey"]
+        # Pluggy keys expire after 2h; renew at 1h50m to be safe
+        self._api_key_expires_at = now + timedelta(hours=1, minutes=50)
+        return self._api_key
+
+    @property
+    async def _headers(self) -> dict[str, str]:
+        key = await self._ensure_api_key()
+        return {"X-API-KEY": key, "Content-Type": "application/json"}
+
+    async def create_connect_token(self, item_id: str | None = None,
+                                     webhook_url: str | None = None,
+                                     client_user_id: str | None = None) -> dict:
+        """POST /connect_token -- used by frontend to open Connect Widget."""
+        headers = await self._headers
+        body: dict = {}
+        if item_id:
+            body["itemId"] = item_id
+        if webhook_url:
+            body["webhookUrl"] = webhook_url
+        if client_user_id:
+            body["clientUserId"] = client_user_id
+        body["options"] = {"webhookUrl": webhook_url} if webhook_url else {}
+        resp = await self._http.post("/connect_token", json=body, headers=headers)
+        resp.raise_for_status()
+        return resp.json()  # {"accessToken": "..."}
+
+    async def get_item(self, item_id: str) -> dict:
+        """GET /items/{item_id}"""
+        headers = await self._headers
+        resp = await self._http.get(f"/items/{item_id}", headers=headers)
+        resp.raise_for_status()
+        return resp.json()
+
+    async def delete_item(self, item_id: str) -> None:
+        """DELETE /items/{item_id}"""
+        headers = await self._headers
+        resp = await self._http.delete(f"/items/{item_id}", headers=headers)
+        resp.raise_for_status()
+
+    async def get_accounts(self, item_id: str) -> list[dict]:
+        """GET /accounts?itemId={item_id}"""
+        headers = await self._headers
+        resp = await self._http.get("/accounts", params={"itemId": item_id}, headers=headers)
+        resp.raise_for_status()
+        return resp.json()["results"]
+
+    async def get_transactions(self, account_id: str, date_from: str | None = None,
+                                date_to: str | None = None, page: int = 1,
+                                page_size: int = 500) -> dict:
+        """GET /transactions?accountId={account_id}&from=...&to=..."""
+        headers = await self._headers
+        params: dict = {"accountId": account_id, "page": page, "pageSize": page_size}
+        if date_from:
+            params["from"] = date_from
+        if date_to:
+            params["to"] = date_to
+        resp = await self._http.get("/transactions", params=params, headers=headers)
+        resp.raise_for_status()
+        return resp.json()  # {"total", "totalPages", "page", "results": [...]}
+
+    async def get_transactions_by_ids(self, ids: list[str]) -> dict:
+        """GET /transactions?ids={id1,id2,...}"""
+        headers = await self._headers
+        resp = await self._http.get("/transactions", params={"ids": ",".join(ids)}, headers=headers)
+        resp.raise_for_status()
+        return resp.json()
+
+    async def close(self) -> None:
+        await self._http.aclose()
+
+
+# Singleton for app-wide reuse
+pluggy_client = PluggyClient()
+```
+
+**Key Design Decisions:**
+- Uses `httpx.AsyncClient` as required by the constraints
+- Caches API key with a safety margin (1h50m vs 2h expiry)
+- Singleton pattern via module-level instance
+- All methods return raw `dict` -- Pydantic parsing happens in the service layer
+- `close()` method for graceful shutdown (hook into FastAPI lifespan)
+
+#### 1.2 -- Pluggy Schemas (`backend/app/schemas/pluggy.py`)
+
+**New file: `backend/app/schemas/pluggy.py`**
+
+```python
+from datetime import datetime
+from decimal import Decimal
+from uuid import UUID
+from pydantic import BaseModel
+
+class ConnectTokenRequest(BaseModel):
+    """Frontend requests a connect token to open the Pluggy Connect Widget."""
+    item_id: str | None = None  # For reconnecting an existing item
+
+class ConnectTokenResponse(BaseModel):
+    access_token: str
+
+class PluggyWebhookPayload(BaseModel):
+    """Incoming webhook from Pluggy."""
+    event: str  # "item/created", "item/updated", "transactions/created", etc.
+    event_id: str | None = None
+    item_id: str | None = None
+    account_id: str | None = None
+    triggered_by: str | None = None  # "USER", "CLIENT", "SYNC"
+    client_user_id: str | None = None
+    # For transactions/created
+    transactions_count: int | None = None
+    created_transactions_link: str | None = None
+    # For transactions/updated
+    transaction_ids: list[str] | None = None
+
+    class Config:
+        # Pluggy sends camelCase
+        populate_by_name = True
+
+class SyncStatusOut(BaseModel):
+    item_id: str
+    status: str  # UPDATING, UPDATED, LOGIN_ERROR, OUTDATED
+    last_sync: datetime | None
+    accounts_synced: int
+    transactions_synced: int
+```
+
+#### 1.3 -- Pluggy Sync Service (`backend/app/services/pluggy_service.py`)
+
+**New file: `backend/app/services/pluggy_service.py`**
+
+This is the core sync logic. It follows the existing service pattern (plain async functions).
+
+```python
+from uuid import UUID
+from datetime import datetime, timezone
+from decimal import Decimal
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.integrations.pluggy_client import pluggy_client
+from app.models.account import Account
+from app.models.transaction import Transaction
+from app.core.config import settings
+
+PLUGGY_WEBHOOK_URL = f"{settings.SUPABASE_URL}/functions/v1/pluggy-webhook"
+# Or better: a dedicated config setting
+
+async def create_connect_token(
+    tenant_id: UUID, user_id: UUID, db: AsyncSession,
+    item_id: str | None = None,
+) -> dict:
+    """Generate a Pluggy Connect Token for the frontend widget."""
+    webhook_url = settings.PLUGGY_WEBHOOK_URL  # New setting needed
+    client_user_id = f"{tenant_id}:{user_id}"
+    result = await pluggy_client.create_connect_token(
+        item_id=item_id,
+        webhook_url=webhook_url,
+        client_user_id=client_user_id,
+    )
+    return result
+
+async def sync_item_accounts(
+    item_id: str, tenant_id: UUID, db: AsyncSession,
+) -> list[Account]:
+    """Fetch accounts from Pluggy and upsert into local DB."""
+    pluggy_accounts = await pluggy_client.get_accounts(item_id)
+    synced = []
+    for pa in pluggy_accounts:
+        # Find existing account by pluggy_account_id
+        acc = await db.scalar(
+            select(Account).where(
+                Account.pluggy_account_id == pa["id"],
+                Account.tenant_id == tenant_id,
+            )
+        )
+        if acc:
+            # Update balance and metadata
+            acc.balance = Decimal(str(pa.get("balance", 0)))
+            acc.name = pa.get("name", acc.name)
+            acc.credit_limit = Decimal(str(pa["creditLimit"])) if pa.get("creditLimit") else None
+        else:
+            # Create new account
+            acc = Account(
+                tenant_id=tenant_id,
+                name=pa.get("name", "Conta"),
+                institution_name=pa.get("connector", {}).get("name", "Instituição"),
+                institution_logo_url=pa.get("connector", {}).get("imageUrl"),
+                type=_map_account_type(pa.get("type", "BANK")),
+                pluggy_item_id=item_id,
+                pluggy_account_id=pa["id"],
+                balance=Decimal(str(pa.get("balance", 0))),
+                credit_limit=Decimal(str(pa["creditLimit"])) if pa.get("creditLimit") else None,
+            )
+            db.add(acc)
+        await db.flush()
+        synced.append(acc)
+    return synced
+
+async def sync_item_transactions(
+    item_id: str, tenant_id: UUID, db: AsyncSession,
+    date_from: str | None = None,
+) -> int:
+    """Fetch transactions from Pluggy for all accounts of an item and upsert."""
+    accounts = await db.scalars(
+        select(Account).where(
+            Account.pluggy_item_id == item_id,
+            Account.tenant_id == tenant_id,
+            Account.is_active.is_(True),
+        )
+    )
+    total_synced = 0
+    for acc in accounts.all():
+        if not acc.pluggy_account_id:
+            continue
+        total_synced += await _sync_account_transactions(
+            acc, tenant_id, db, date_from=date_from
+        )
+    return total_synced
+
+async def _sync_account_transactions(
+    account: Account, tenant_id: UUID, db: AsyncSession,
+    date_from: str | None = None,
+) -> int:
+    """Paginate through all transactions for a single account."""
+    page = 1
+    synced = 0
+    while True:
+        result = await pluggy_client.get_transactions(
+            account_id=account.pluggy_account_id,
+            date_from=date_from,
+            page=page,
+        )
+        for pt in result.get("results", []):
+            ext_id = pt["id"]
+            # Dedup by external_id (unique constraint)
+            existing = await db.scalar(
+                select(Transaction).where(Transaction.external_id == ext_id)
+            )
+            if existing:
+                # Update if amount or description changed
+                existing.amount = Decimal(str(pt["amount"]))
+                existing.description = pt.get("description", existing.description)
+            else:
+                tx = Transaction(
+                    tenant_id=tenant_id,
+                    account_id=account.id,
+                    description=pt.get("description", ""),
+                    amount=Decimal(str(pt["amount"])),
+                    type=_map_tx_type(pt.get("type", "DEBIT")),
+                    date=datetime.fromisoformat(pt["date"]),
+                    external_id=ext_id,
+                    installment_number=_extract_installment_number(pt),
+                    installment_total=_extract_installment_total(pt),
+                )
+                db.add(tx)
+                synced += 1
+        await db.flush()
+        if page >= result.get("totalPages", 1):
+            break
+        page += 1
+    return synced
+
+def _map_account_type(pluggy_type: str) -> str:
+    mapping = {
+        "BANK": "checking",
+        "CREDIT": "credit_card",
+        "SAVINGS": "savings",
+        "INVESTMENT": "investment",
+    }
+    return mapping.get(pluggy_type, "checking")
+
+def _map_tx_type(pluggy_type: str) -> str:
+    mapping = {"DEBIT": "debit", "CREDIT": "credit"}
+    return mapping.get(pluggy_type, "debit")
+
+def _extract_installment_number(pt: dict) -> int | None:
+    meta = pt.get("creditCardMetadata")
+    if meta and meta.get("installmentNumber"):
+        return meta["installmentNumber"]
+    return None
+
+def _extract_installment_total(pt: dict) -> int | None:
+    meta = pt.get("creditCardMetadata")
+    if meta and meta.get("totalInstallments"):
+        return meta["totalInstallments"]
+    return None
+```
+
+#### 1.4 -- New Config Settings
+
+**Modify: `backend/app/core/config.py`**
+
+Add these settings to the `Settings` class:
+
+```python
+    # Open Finance
+    PLUGGY_CLIENT_ID: str = ""
+    PLUGGY_CLIENT_SECRET: str = ""
+    PLUGGY_WEBHOOK_URL: str = ""  # NEW: e.g., https://api.visor.app/api/v1/webhooks/pluggy
+    PLUGGY_WEBHOOK_SECRET: str = ""  # NEW: for verifying webhook authenticity
+
+    # Stripe
+    STRIPE_SECRET_KEY: str = ""
+    STRIPE_WEBHOOK_SECRET: str = ""
+    STRIPE_PRICE_PRO: str = ""  # NEW
+    STRIPE_PRICE_PREMIUM: str = ""  # NEW
+```
+
+#### 1.5 -- Open Finance API Endpoints (`backend/app/api/v1/open_finance.py`)
+
+**New file: `backend/app/api/v1/open_finance.py`**
+
+```python
+from uuid import UUID
+from fastapi import APIRouter, HTTPException, status
+from app.core.deps import AuthUser, DBSession
+from app.schemas.pluggy import ConnectTokenRequest, ConnectTokenResponse, SyncStatusOut
+from app.services import pluggy_service
+from app.integrations.pluggy_client import pluggy_client
+
+router = APIRouter(prefix="/open-finance", tags=["Open Finance"])
+
+@router.post("/connect-token", response_model=ConnectTokenResponse)
+async def create_connect_token(
+    data: ConnectTokenRequest, current_user: AuthUser, db: DBSession
+) -> ConnectTokenResponse:
+    """Generate Pluggy Connect Token for the frontend widget."""
+    result = await pluggy_service.create_connect_token(
+        tenant_id=current_user.tenant_id,
+        user_id=current_user.user_id,
+        db=db,
+        item_id=data.item_id,
+    )
+    return ConnectTokenResponse(access_token=result["accessToken"])
+
+@router.post("/sync/{item_id}")
+async def trigger_sync(
+    item_id: str, current_user: AuthUser, db: DBSession
+) -> dict:
+    """Manually trigger sync for a specific Pluggy item."""
+    accounts = await pluggy_service.sync_item_accounts(
+        item_id, current_user.tenant_id, db
+    )
+    tx_count = await pluggy_service.sync_item_transactions(
+        item_id, current_user.tenant_id, db
+    )
+    return {
+        "accounts_synced": len(accounts),
+        "transactions_synced": tx_count,
+    }
+
+@router.delete("/items/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def disconnect_item(
+    item_id: str, current_user: AuthUser, db: DBSession
+) -> None:
+    """Disconnect a Pluggy item and soft-delete its accounts."""
+    # Verify ownership
+    from sqlalchemy import select
+    from app.models.account import Account
+    accounts = await db.scalars(
+        select(Account).where(
+            Account.pluggy_item_id == item_id,
+            Account.tenant_id == current_user.tenant_id,
+        )
+    )
+    acc_list = accounts.all()
+    if not acc_list:
+        raise HTTPException(status_code=404, detail="Item not found")
+    # Soft delete all accounts for this item
+    for acc in acc_list:
+        acc.is_active = False
+    # Delete from Pluggy
+    await pluggy_client.delete_item(item_id)
+```
+
+**Modify: `backend/app/api/v1/router.py`** -- add:
+
+```python
+from app.api.v1 import open_finance
+api_router.include_router(open_finance.router)
+```
+
+#### 1.6 -- Update FastAPI Lifespan
+
+**Modify: `backend/app/main.py`** -- add cleanup for the Pluggy client:
+
+```python
+from app.integrations.pluggy_client import pluggy_client
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    if not settings.is_production:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+    yield
+    await pluggy_client.close()
+    await engine.dispose()
+```
+
+#### 1.7 -- Tests for Pluggy Integration
+
+**New file: `backend/tests/test_open_finance.py`**
+
+Tests will mock `pluggy_client` using `unittest.mock.AsyncMock`:
+- `test_create_connect_token` -- mock `pluggy_client.create_connect_token` to return `{"accessToken": "tok_123"}`, verify endpoint returns it
+- `test_sync_item` -- mock `pluggy_client.get_accounts` and `pluggy_client.get_transactions`, verify accounts and transactions are created in DB
+- `test_sync_dedup` -- run sync twice with same external_ids, verify no duplicates
+- `test_disconnect_item` -- verify soft delete + Pluggy API call
+
+The test file pattern follows the existing `conftest.py` with `auth_client` fixture.
+
+**Dependencies:** None (this is the foundation)
+
+---
+
+### BE-13: Webhooks Open Finance
+
+**Depends on:** BE-04 (Pluggy client + sync service)
+
+#### 2.1 -- Webhook Endpoint (`backend/app/api/v1/webhooks.py`)
+
+**New file: `backend/app/api/v1/webhooks.py`**
+
+```python
+import logging
+from fastapi import APIRouter, BackgroundTasks, Request, Response, status
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.db.session import AsyncSessionLocal
+from app.models.account import Account
+from app.services import pluggy_service
+from app.schemas.pluggy import PluggyWebhookPayload
+
+logger = logging.getLogger(__name__)
+router = APIRouter(prefix="/webhooks", tags=["Webhooks"])
+
+@router.post("/pluggy", status_code=status.HTTP_200_OK)
+async def pluggy_webhook(request: Request, background_tasks: BackgroundTasks) -> Response:
+    """
+    Receive Pluggy webhook notifications.
+    MUST return 2XX immediately per Pluggy docs, then process async.
+    """
+    body = await request.json()
+    # Convert camelCase to snake_case (Pluggy sends camelCase)
+    payload = _parse_pluggy_payload(body)
+    logger.info(f"Pluggy webhook: event={payload.event}, item_id={payload.item_id}")
+
+    # Process in background to return 200 immediately
+    if payload.event in ("item/created", "item/updated"):
+        background_tasks.add_task(_handle_item_event, payload)
+    elif payload.event == "transactions/created":
+        background_tasks.add_task(_handle_transactions_created, payload)
+    elif payload.event == "transactions/updated":
+        background_tasks.add_task(_handle_transactions_updated, payload)
+    elif payload.event in ("item/error", "item/login_error"):
+        background_tasks.add_task(_handle_item_error, payload)
+
+    return Response(status_code=200)
+
+def _parse_pluggy_payload(body: dict) -> PluggyWebhookPayload:
+    """Map camelCase Pluggy payload to snake_case Pydantic model."""
+    return PluggyWebhookPayload(
+        event=body.get("event", ""),
+        event_id=body.get("eventId"),
+        item_id=body.get("itemId"),
+        account_id=body.get("accountId"),
+        triggered_by=body.get("triggeredBy"),
+        client_user_id=body.get("clientUserId"),
+        transactions_count=body.get("transactionsCount"),
+        created_transactions_link=body.get("createdTransactionsLink"),
+        transaction_ids=body.get("transactionIds"),
+    )
+
+async def _handle_item_event(payload: PluggyWebhookPayload) -> None:
+    """When item is created/updated, sync accounts + transactions."""
+    if not payload.item_id or not payload.client_user_id:
+        return
+    # client_user_id format: "{tenant_id}:{user_id}"
+    tenant_id_str = payload.client_user_id.split(":")[0]
+    from uuid import UUID
+    tenant_id = UUID(tenant_id_str)
+
+    async with AsyncSessionLocal() as db:
+        try:
+            await pluggy_service.sync_item_accounts(payload.item_id, tenant_id, db)
+            await pluggy_service.sync_item_transactions(payload.item_id, tenant_id, db)
+            await db.commit()
+        except Exception:
+            await db.rollback()
+            logger.exception(f"Failed to sync item {payload.item_id}")
+
+async def _handle_transactions_created(payload: PluggyWebhookPayload) -> None:
+    """New transactions created -- use createdTransactionsLink or sync account."""
+    if not payload.item_id or not payload.client_user_id:
+        return
+    tenant_id = UUID(payload.client_user_id.split(":")[0])
+    async with AsyncSessionLocal() as db:
+        try:
+            await pluggy_service.sync_item_transactions(
+                payload.item_id, tenant_id, db,
+                date_from=None,  # Full sync or use transactionsMinDate
+            )
+            await db.commit()
+        except Exception:
+            await db.rollback()
+            logger.exception(f"Failed to sync transactions for item {payload.item_id}")
+
+async def _handle_transactions_updated(payload: PluggyWebhookPayload) -> None:
+    """Transactions updated -- fetch by IDs and update."""
+    if not payload.transaction_ids or not payload.client_user_id:
+        return
+    from app.integrations.pluggy_client import pluggy_client
+    from app.models.transaction import Transaction
+    from decimal import Decimal
+
+    tenant_id = UUID(payload.client_user_id.split(":")[0])
+    result = await pluggy_client.get_transactions_by_ids(payload.transaction_ids)
+    async with AsyncSessionLocal() as db:
+        try:
+            for pt in result.get("results", []):
+                tx = await db.scalar(
+                    select(Transaction).where(
+                        Transaction.external_id == pt["id"],
+                        Transaction.tenant_id == tenant_id,
+                    )
+                )
+                if tx:
+                    tx.amount = Decimal(str(pt["amount"]))
+                    tx.description = pt.get("description", tx.description)
+            await db.commit()
+        except Exception:
+            await db.rollback()
+            logger.exception("Failed to update transactions")
+
+async def _handle_item_error(payload: PluggyWebhookPayload) -> None:
+    """Log item errors for monitoring."""
+    logger.error(f"Pluggy item error: item_id={payload.item_id}, event={payload.event}")
+```
+
+**Modify: `backend/app/api/v1/router.py`** -- add:
+
+```python
+from app.api.v1 import webhooks
+api_router.include_router(webhooks.router)
+```
+
+**Important:** The webhook endpoint is NOT authenticated with JWT (Pluggy calls it). Security is via:
+1. IP whitelisting in production (Pluggy IP: `177.71.238.212`)
+2. Optional custom header verification (configured in Pluggy dashboard)
+3. The `PLUGGY_WEBHOOK_SECRET` config setting
+
+#### 2.2 -- New Model: WebhookLog (`backend/app/models/webhook_log.py`)
+
+For auditing and debugging:
+
+```python
+import uuid
+from sqlalchemy import String, Text, DateTime
+from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.orm import Mapped, mapped_column
+from app.db.session import Base
+from app.models.base import TimestampMixin
+
+class WebhookLog(Base, TimestampMixin):
+    __tablename__ = "webhook_logs"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    source: Mapped[str] = mapped_column(String(30), nullable=False)  # "pluggy" | "stripe"
+    event: Mapped[str] = mapped_column(String(80), nullable=False)
+    event_id: Mapped[str | None] = mapped_column(String(120), nullable=True, index=True)
+    payload: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="received")
+    # received | processed | failed
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+```
+
+**Alembic migration:** `backend/migrations/versions/0002_webhook_logs.py`
+
+**Tests:** `backend/tests/test_webhooks.py`
+- `test_pluggy_webhook_item_updated` -- POST to `/api/v1/webhooks/pluggy` with mock payload, verify 200
+- `test_pluggy_webhook_transactions_created` -- verify sync is triggered
+- `test_pluggy_webhook_unknown_event` -- verify graceful handling
+
+---
+
+### BE-14: Celery Periodic Sync Job
+
+**Depends on:** BE-04 (Pluggy client + sync service)
+
+#### 3.1 -- Implement Task Stubs (`backend/app/workers/tasks.py`)
+
+Replace the current stubs with working implementations. Celery tasks are synchronous, so we need `asyncio.run()` to call async services.
+
+```python
+import asyncio
+import logging
+from uuid import UUID
+from app.workers.celery_app import celery_app
+from app.db.session import AsyncSessionLocal
+
+logger = logging.getLogger(__name__)
+
+@celery_app.task(name="app.workers.tasks.sync_all_tenants", bind=True, max_retries=3)
+def sync_all_tenants(self) -> None:
+    """Dispatch sync for all tenants with active Pluggy connections."""
+    asyncio.run(_sync_all_tenants_async())
+
+async def _sync_all_tenants_async() -> None:
+    from sqlalchemy import select, distinct
+    from app.models.account import Account
+
+    async with AsyncSessionLocal() as db:
+        # Find all distinct tenant_ids that have pluggy items
+        result = await db.scalars(
+            select(distinct(Account.tenant_id)).where(
+                Account.pluggy_item_id.isnot(None),
+                Account.is_active.is_(True),
+            )
+        )
+        tenant_ids = result.all()
+
+    for tid in tenant_ids:
+        # Dispatch individual tenant sync as separate task
+        sync_tenant.delay(str(tid))
+
+@celery_app.task(name="app.workers.tasks.sync_tenant", bind=True, max_retries=3)
+def sync_tenant(self, tenant_id: str) -> None:
+    """Sync all Pluggy items for a single tenant."""
+    try:
+        asyncio.run(_sync_tenant_async(UUID(tenant_id)))
+    except Exception as exc:
+        logger.exception(f"Failed to sync tenant {tenant_id}")
+        raise self.retry(exc=exc, countdown=60 * (self.request.retries + 1))
+
+async def _sync_tenant_async(tenant_id: UUID) -> None:
+    from sqlalchemy import select, distinct
+    from app.models.account import Account
+    from app.services import pluggy_service
+
+    async with AsyncSessionLocal() as db:
+        # Get all distinct item_ids for this tenant
+        result = await db.scalars(
+            select(distinct(Account.pluggy_item_id)).where(
+                Account.tenant_id == tenant_id,
+                Account.pluggy_item_id.isnot(None),
+                Account.is_active.is_(True),
+            )
+        )
+        item_ids = result.all()
+
+        for item_id in item_ids:
+            try:
+                await pluggy_service.sync_item_accounts(item_id, tenant_id, db)
+                await pluggy_service.sync_item_transactions(item_id, tenant_id, db)
+            except Exception:
+                logger.exception(f"Failed to sync item {item_id} for tenant {tenant_id}")
+        await db.commit()
+
+@celery_app.task(name="app.workers.tasks.send_notification")
+def send_notification(user_id: str, subject: str, body: str) -> None:
+    """Send transactional email via SendGrid."""
+    # TODO: BE-15 -- SendGrid integration
+    pass
+```
+
+**Tests:** `backend/tests/test_tasks.py`
+- Mock `pluggy_client` and verify that `sync_all_tenants` dispatches `sync_tenant` for each tenant with Pluggy connections
+- Verify retry behavior on failure
+
+---
+
+### BE-07: Recurrence Detection Engine
+
+**Depends on:** BE-04 (transactions must exist in DB)
+
+#### 4.1 -- Recurrence Service (`backend/app/services/recurrence_service.py`)
+
+**New file: `backend/app/services/recurrence_service.py`**
+
+The detection algorithm:
+1. **Installments:** Look for transactions with `installment_number` and `installment_total` already set by Pluggy (via `creditCardMetadata`). Group them by description pattern similarity.
+2. **Fixed Recurring:** Analyze 3+ months of history. Group transactions by similar description (fuzzy match) and similar amounts. If they appear monthly with consistent amounts, flag as recurring.
+
+```python
+from uuid import UUID
+from datetime import date, timedelta
+from decimal import Decimal
+from collections import defaultdict
+
+from sqlalchemy import select, func, and_
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.transaction import Transaction
+from app.models.recurrence import Recurrence
+from app.schemas.recurrence import RecurrenceCreate, RecurrenceOut
+
+async def detect_recurrences(tenant_id: UUID, db: AsyncSession) -> list[Recurrence]:
+    """
+    Analyze transaction history to detect installments and recurring expenses.
+    Returns list of newly created/updated Recurrence records.
+    """
+    recurrences = []
+    recurrences.extend(await _detect_installments(tenant_id, db))
+    recurrences.extend(await _detect_fixed_recurring(tenant_id, db))
+    await db.flush()
+    return recurrences
+
+async def _detect_installments(tenant_id: UUID, db: AsyncSession) -> list[Recurrence]:
+    """Detect installment series from transactions with installment_number set."""
+    result = await db.execute(
+        select(Transaction)
+        .where(
+            Transaction.tenant_id == tenant_id,
+            Transaction.installment_total.isnot(None),
+            Transaction.recurrence_id.is_(None),  # Not yet linked
+        )
+        .order_by(Transaction.description, Transaction.installment_number)
+    )
+    transactions = result.scalars().all()
+
+    # Group by normalized description + total installments + similar amount
+    groups = defaultdict(list)
+    for tx in transactions:
+        key = (_normalize_desc(tx.description), tx.installment_total, _round_amount(tx.amount))
+        groups[key].append(tx)
+
+    recurrences = []
+    for (desc, total, amount), txs in groups.items():
+        if len(txs) < 2:
+            continue
+        max_installment = max(tx.installment_number or 0 for tx in txs)
+        last_date = max(tx.date for tx in txs)
+        next_due = last_date.date() + timedelta(days=30) if max_installment < total else None
+
+        rec = Recurrence(
+            tenant_id=txs[0].tenant_id,
+            description=desc,
+            amount=abs(amount),
+            frequency="installment",
+            total_installments=total,
+            current_installment=max_installment,
+            next_due_date=next_due if next_due and max_installment < total else None,
+            is_active=max_installment < total,
+        )
+        db.add(rec)
+        await db.flush()
+
+        for tx in txs:
+            tx.recurrence_id = rec.id
+        recurrences.append(rec)
+
+    return recurrences
+
+async def _detect_fixed_recurring(tenant_id: UUID, db: AsyncSession) -> list[Recurrence]:
+    """
+    Detect fixed recurring expenses by finding transactions that repeat
+    monthly with similar descriptions and amounts.
+    Requires 3+ occurrences to classify as recurring.
+    """
+    # Get all expense transactions from last 6 months
+    six_months_ago = date.today() - timedelta(days=180)
+    result = await db.execute(
+        select(Transaction)
+        .where(
+            Transaction.tenant_id == tenant_id,
+            Transaction.amount < 0,  # expenses only
+            Transaction.date >= six_months_ago,
+            Transaction.recurrence_id.is_(None),
+        )
+        .order_by(Transaction.description, Transaction.date)
+    )
+    transactions = result.scalars().all()
+
+    # Group by normalized description
+    groups = defaultdict(list)
+    for tx in transactions:
+        key = _normalize_desc(tx.description)
+        groups[key].append(tx)
+
+    recurrences = []
+    for desc, txs in groups.items():
+        if len(txs) < 3:
+            continue
+        # Check if amounts are similar (within 10% variance)
+        amounts = [abs(tx.amount) for tx in txs]
+        avg_amount = sum(amounts) / len(amounts)
+        if any(abs(a - avg_amount) / avg_amount > 0.1 for a in amounts):
+            continue
+        # Check if roughly monthly (25-35 day intervals)
+        dates = sorted(tx.date for tx in txs)
+        intervals = [(dates[i+1] - dates[i]).days for i in range(len(dates)-1)]
+        avg_interval = sum(intervals) / len(intervals)
+        if not (20 <= avg_interval <= 40):
+            continue
+
+        last_date = max(tx.date for tx in txs)
+        next_due = last_date.date() + timedelta(days=int(avg_interval))
+
+        rec = Recurrence(
+            tenant_id=txs[0].tenant_id,
+            description=desc,
+            amount=avg_amount,
+            frequency="monthly",
+            next_due_date=next_due,
+            is_active=True,
+        )
+        db.add(rec)
+        await db.flush()
+        for tx in txs:
+            tx.recurrence_id = rec.id
+        recurrences.append(rec)
+
+    return recurrences
+
+def _normalize_desc(desc: str) -> str:
+    """Normalize description for grouping (remove dates, installment numbers)."""
+    import re
+    desc = desc.upper().strip()
+    desc = re.sub(r'\d{1,2}/\d{1,2}', '', desc)  # Remove "1/12", "03/06"
+    desc = re.sub(r'PARC\s*\d+', '', desc)  # Remove "PARC 3"
+    desc = re.sub(r'\s+', ' ', desc).strip()
+    return desc
+
+def _round_amount(amount: Decimal) -> Decimal:
+    """Round to nearest integer for grouping purposes."""
+    return Decimal(str(round(abs(amount))))
+```
+
+#### 4.2 -- Recurrence Schemas (`backend/app/schemas/recurrence.py`)
+
+**New file: `backend/app/schemas/recurrence.py`**
+
+```python
+from datetime import date
+from decimal import Decimal
+from uuid import UUID
+from pydantic import BaseModel
+
+class RecurrenceOut(BaseModel):
+    id: UUID
+    description: str
+    amount: Decimal
+    frequency: str
+    total_installments: int | None
+    current_installment: int | None
+    next_due_date: date | None
+    is_active: bool
+    category_id: UUID | None
+
+    model_config = {"from_attributes": True}
+
+class RecurrenceCreate(BaseModel):
+    description: str
+    amount: Decimal
+    frequency: str
+    category_id: UUID | None = None
+    total_installments: int | None = None
+    next_due_date: date | None = None
+
+class RecurrenceUpdate(BaseModel):
+    description: str | None = None
+    amount: Decimal | None = None
+    category_id: UUID | None = None
+    next_due_date: date | None = None
+    is_active: bool | None = None
+```
+
+#### 4.3 -- Recurrence API Endpoints (`backend/app/api/v1/recurrences.py`)
+
+**New file: `backend/app/api/v1/recurrences.py`**
+
+```python
+from uuid import UUID
+from fastapi import APIRouter, status
+from app.core.deps import AuthUser, DBSession
+from app.schemas.recurrence import RecurrenceCreate, RecurrenceOut, RecurrenceUpdate
+from app.services import recurrence_service
+
+router = APIRouter(prefix="/recurrences", tags=["Recorrencias"])
+
+@router.get("/", response_model=list[RecurrenceOut])
+async def list_recurrences(current_user: AuthUser, db: DBSession):
+    return await recurrence_service.list_recurrences(current_user.tenant_id, db)
+
+@router.post("/detect", response_model=list[RecurrenceOut])
+async def detect_recurrences(current_user: AuthUser, db: DBSession):
+    """Trigger recurrence detection algorithm."""
+    recs = await recurrence_service.detect_recurrences(current_user.tenant_id, db)
+    return [RecurrenceOut.model_validate(r) for r in recs]
+
+@router.patch("/{rec_id}", response_model=RecurrenceOut)
+async def update_recurrence(rec_id: UUID, data: RecurrenceUpdate,
+                             current_user: AuthUser, db: DBSession):
+    return await recurrence_service.update_recurrence(rec_id, data, current_user.tenant_id, db)
+```
+
+**Modify: `backend/app/api/v1/router.py`** -- add recurrences router.
+
+**Modify: `backend/app/models/recurrence.py`** -- Fix the `transactions` relationship (currently has a bug: `back_populates="recurrence_id"` should be `back_populates="recurrence"`). Also add the `tenant` relationship.
+
+**Tests:** `backend/tests/test_recurrences.py`
+- Create several monthly transactions with similar descriptions, then call `/detect` and verify recurrences are created
+- Test installment detection with `installment_number`/`installment_total` fields
+
+---
+
+### BE-11: Credit Card Bill API
+
+**Depends on:** BE-04 (transactions with credit card data)
+
+#### 5.1 -- Bill Service (`backend/app/services/bill_service.py`)
+
+**New file: `backend/app/services/bill_service.py`**
+
+Credit card billing cycles: group transactions by card account and billing period. Most Brazilian credit cards close on a specific day of the month.
+
+```python
+from uuid import UUID
+from datetime import datetime, date, timedelta
+from decimal import Decimal
+from sqlalchemy import select, func, and_
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.models.transaction import Transaction
+from app.models.account import Account
+
+async def get_credit_card_bills(
+    tenant_id: UUID, account_id: UUID, db: AsyncSession,
+    closing_day: int = 25,  # Default closing day
+) -> list[dict]:
+    """
+    Group credit card transactions by billing cycle.
+    Returns list of bills with total, status, and transactions.
+    """
+    account = await db.scalar(
+        select(Account).where(
+            Account.id == account_id,
+            Account.tenant_id == tenant_id,
+            Account.type == "credit_card",
+        )
+    )
+    if not account:
+        from fastapi import HTTPException, status
+        raise HTTPException(status_code=404, detail="Credit card account not found")
+
+    # Get all transactions for this credit card
+    transactions = (await db.scalars(
+        select(Transaction).where(
+            Transaction.account_id == account_id,
+            Transaction.tenant_id == tenant_id,
+            Transaction.is_excluded.is_(False),
+        ).order_by(Transaction.date.desc())
+    )).all()
+
+    # Group by billing cycle
+    bills: dict[str, dict] = {}
+    for tx in transactions:
+        bill_key = _get_bill_period(tx.date, closing_day)
+        if bill_key not in bills:
+            bills[bill_key] = {
+                "period": bill_key,
+                "closing_date": _get_closing_date(tx.date, closing_day).isoformat(),
+                "due_date": (_get_closing_date(tx.date, closing_day) + timedelta(days=10)).isoformat(),
+                "total": Decimal("0"),
+                "transaction_count": 0,
+                "transactions": [],
+            }
+        bills[bill_key]["total"] += tx.amount
+        bills[bill_key]["transaction_count"] += 1
+
+    return sorted(bills.values(), key=lambda b: b["period"], reverse=True)
+
+def _get_bill_period(tx_date: datetime, closing_day: int) -> str:
+    """Determine which billing period a transaction belongs to."""
+    d = tx_date.date() if isinstance(tx_date, datetime) else tx_date
+    if d.day <= closing_day:
+        return f"{d.year}-{d.month:02d}"
+    else:
+        next_month = d.replace(day=1) + timedelta(days=32)
+        return f"{next_month.year}-{next_month.month:02d}"
+
+def _get_closing_date(tx_date: datetime, closing_day: int) -> date:
+    d = tx_date.date() if isinstance(tx_date, datetime) else tx_date
+    if d.day <= closing_day:
+        return d.replace(day=closing_day)
+    else:
+        next_month = d.replace(day=1) + timedelta(days=32)
+        return next_month.replace(day=closing_day)
+```
+
+#### 5.2 -- Bill API Endpoints
+
+**New file: `backend/app/api/v1/bills.py`**
+
+```python
+from uuid import UUID
+from fastapi import APIRouter, Query
+from app.core.deps import AuthUser, DBSession
+from app.services import bill_service
+
+router = APIRouter(prefix="/bills", tags=["Faturas"])
+
+@router.get("/{account_id}")
+async def get_bills(
+    account_id: UUID,
+    current_user: AuthUser,
+    db: DBSession,
+    closing_day: int = Query(25, ge=1, le=31),
+) -> list[dict]:
+    """List credit card bills grouped by billing cycle."""
+    return await bill_service.get_credit_card_bills(
+        current_user.tenant_id, account_id, db, closing_day
+    )
+```
+
+---
+
+## PHASE 2 -- Analytical APIs
+
+### BE-09: Balance Projection
+
+**Depends on:** BE-07 (recurrences)
+
+**New file: `backend/app/services/projection_service.py`**
+
+```python
+from uuid import UUID
+from datetime import date, timedelta
+from decimal import Decimal
+from dateutil.relativedelta import relativedelta
+from sqlalchemy import select, func
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.models.account import Account
+from app.models.recurrence import Recurrence
+
+async def project_balance(
+    tenant_id: UUID, db: AsyncSession,
+    months: int = 3,  # 3, 6, or 12
+) -> list[dict]:
+    """
+    Project balance forward based on:
+    - Current total balance across all accounts
+    - Active recurrences (monthly expenses/income)
+    - Installments remaining
+    """
+    # Get current total balance
+    total_balance = await db.scalar(
+        select(func.sum(Account.balance)).where(
+            Account.tenant_id == tenant_id,
+            Account.is_active.is_(True),
+        )
+    ) or Decimal("0")
+
+    # Get active recurrences
+    recurrences = (await db.scalars(
+        select(Recurrence).where(
+            Recurrence.tenant_id == tenant_id,
+            Recurrence.is_active.is_(True),
+        )
+    )).all()
+
+    projections = []
+    current_balance = total_balance
+    today = date.today()
+
+    for i in range(1, months + 1):
+        target_month = today + relativedelta(months=i)
+        month_delta = Decimal("0")
+
+        for rec in recurrences:
+            if rec.frequency == "monthly":
+                month_delta -= rec.amount  # expenses are stored as positive in recurrence
+            elif rec.frequency == "installment":
+                if rec.current_installment and rec.total_installments:
+                    if rec.current_installment + i <= rec.total_installments:
+                        month_delta -= rec.amount
+
+        current_balance += month_delta
+        projections.append({
+            "month": target_month.strftime("%Y-%m"),
+            "projected_balance": current_balance,
+            "monthly_delta": month_delta,
+        })
+
+    return projections
+```
+
+**New file: `backend/app/api/v1/projections.py`** with `GET /projections/balance?months=3`
+
+**Modify: `backend/app/api/v1/router.py`** -- add projections router.
+
+---
+
+### BE-10: Net Worth API
+
+**Depends on:** BE-04 (accounts with balances)
+
+**New file: `backend/app/services/patrimony_service.py`**
+
+```python
+async def get_net_worth(tenant_id: UUID, db: AsyncSession) -> dict:
+    """Assets vs liabilities, net worth."""
+    accounts = (await db.scalars(
+        select(Account).where(
+            Account.tenant_id == tenant_id,
+            Account.is_active.is_(True),
+        )
+    )).all()
+
+    assets = Decimal("0")
+    liabilities = Decimal("0")
+    by_type = {}
+
+    for acc in accounts:
+        if acc.type in ("checking", "savings", "investment", "wallet"):
+            if acc.balance > 0:
+                assets += acc.balance
+        elif acc.type == "credit_card":
+            liabilities += abs(acc.balance)
+
+        by_type.setdefault(acc.type, Decimal("0"))
+        by_type[acc.type] += acc.balance
+
+    return {
+        "assets": assets,
+        "liabilities": liabilities,
+        "net_worth": assets - liabilities,
+        "by_type": by_type,
+    }
+
+async def get_net_worth_history(
+    tenant_id: UUID, db: AsyncSession, months: int = 6,
+) -> list[dict]:
+    """
+    Historical net worth by month.
+    Uses transaction data to reconstruct balances backwards.
+    """
+    # ... implementation using monthly aggregations
+```
+
+**New file: `backend/app/api/v1/patrimony.py`** with `GET /patrimony/net-worth` and `GET /patrimony/history`
+
+---
+
+### BE-06: Auto-Categorization
+
+**Depends on:** BE-04 (transactions), existing categories
+
+**New file: `backend/app/services/categorization_service.py`**
+
+Phase 1: Keyword-based rules. Phase 2 (future): ML model.
+
+```python
+# Keyword mapping for common Brazilian merchants/descriptions
+KEYWORD_RULES: dict[str, str] = {
+    "supermercado": "Alimentacao",
+    "mercado": "Alimentacao",
+    "uber": "Transporte",
+    "99": "Transporte",
+    "ifood": "Alimentacao",
+    "netflix": "Entretenimento",
+    "spotify": "Entretenimento",
+    "farmacia": "Saude",
+    "drogaria": "Saude",
+    "aluguel": "Moradia",
+    "condominio": "Moradia",
+    "energia": "Moradia",
+    "agua": "Moradia",
+    "internet": "Servicos",
+    "telefone": "Servicos",
+    "gasolina": "Transporte",
+    "combustivel": "Transporte",
+}
+
+async def auto_categorize_transaction(
+    tx: Transaction, tenant_id: UUID, db: AsyncSession,
+) -> UUID | None:
+    """Attempt to categorize a transaction based on description keywords."""
+    desc_lower = tx.description.lower()
+    for keyword, category_name in KEYWORD_RULES.items():
+        if keyword in desc_lower:
+            # Find matching category for this tenant
+            cat = await db.scalar(
+                select(Category).where(
+                    Category.tenant_id == tenant_id,
+                    Category.name.ilike(f"%{category_name}%"),
+                )
+            )
+            if cat:
+                return cat.id
+    return None
+```
+
+Integrate into `pluggy_service.py` in `_sync_account_transactions` -- after creating a new transaction, call `auto_categorize_transaction` and set `category_id`.
+
+---
+
+## PHASE 3 -- Multi-tenant + Monetization
+
+### MT-04: Plan Limits System
+
+**Depends on:** Existing Tenant model (already has `plan` field)
+
+#### New file: `backend/app/core/plan_limits.py`
+
+```python
+from enum import Enum
+
+class Plan(str, Enum):
+    FREE = "free"
+    PRO = "pro"
+    PREMIUM = "premium"
+
+PLAN_LIMITS = {
+    Plan.FREE: {
+        "max_accounts": 2,
+        "max_manual_transactions_per_month": 100,
+        "open_finance": False,
+        "projections": False,
+        "csv_export": False,
+    },
+    Plan.PRO: {
+        "max_accounts": 10,
+        "max_manual_transactions_per_month": 1000,
+        "open_finance": True,
+        "projections": True,
+        "csv_export": True,
+    },
+    Plan.PREMIUM: {
+        "max_accounts": -1,  # unlimited
+        "max_manual_transactions_per_month": -1,
+        "open_finance": True,
+        "projections": True,
+        "csv_export": True,
+    },
+}
+```
+
+#### New file: `backend/app/core/plan_guard.py`
+
+FastAPI dependency that checks plan limits:
+
+```python
+from fastapi import HTTPException, status
+from app.core.deps import AuthUser, DBSession
+from app.models.tenant import Tenant
+from app.core.plan_limits import PLAN_LIMITS
+
+async def require_feature(feature: str):
+    """Factory for plan-gated dependencies."""
+    async def _guard(current_user: AuthUser, db: DBSession):
+        tenant = await db.get(Tenant, current_user.tenant_id)
+        limits = PLAN_LIMITS.get(tenant.plan, PLAN_LIMITS["free"])
+        if not limits.get(feature):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Feature '{feature}' requires plan upgrade",
+            )
+    return _guard
+```
+
+Usage in endpoints:
+
+```python
+@router.post("/connect-token", dependencies=[Depends(require_feature("open_finance"))])
+```
+
+---
+
+### MT-05 + MT-06: Stripe Integration
+
+**New file: `backend/app/services/stripe_service.py`**
+**New file: `backend/app/api/v1/billing.py`**
+
+Endpoints:
+- `POST /billing/checkout` -- create Stripe Checkout session
+- `POST /billing/portal` -- create Stripe Customer Portal session
+- `GET /billing/subscription` -- get current subscription status
+
+**Modify: `backend/app/api/v1/webhooks.py`** -- add Stripe webhook handler at `POST /webhooks/stripe`:
+- `checkout.session.completed` -- activate plan
+- `invoice.paid` -- confirm payment
+- `customer.subscription.updated` -- handle upgrade/downgrade
+- `customer.subscription.deleted` -- handle cancellation
+
+---
+
+## PHASE 4 -- Frontend (Next.js)
+
+### FE-01: Project Setup
+
+**New directory: `frontend/`**
+
+```
+frontend/
+  src/
+    app/                    # Next.js App Router
+      (auth)/               # Auth layout group
+        login/page.tsx
+        register/page.tsx
+        forgot-password/page.tsx
+      (dashboard)/          # Main app layout group
+        layout.tsx          # Sidebar + header
+        page.tsx            # Dashboard overview
+        transactions/page.tsx
+        accounts/page.tsx
+        categories/page.tsx
+        recurrences/page.tsx
+        projections/page.tsx
+        patrimony/page.tsx
+        bills/[accountId]/page.tsx
+        settings/
+          page.tsx
+          billing/page.tsx
+    components/
+      ui/                   # shadcn/ui components
+      layout/
+        sidebar.tsx
+        header.tsx
+        mobile-nav.tsx
+      dashboard/
+        summary-cards.tsx
+        spending-chart.tsx
+        recent-transactions.tsx
+        cash-flow-chart.tsx
+      transactions/
+        transaction-table.tsx
+        transaction-filters.tsx
+        transaction-form.tsx
+      accounts/
+        account-card.tsx
+        connect-widget.tsx  # Pluggy Connect integration
+      charts/
+        line-chart.tsx
+        bar-chart.tsx
+        pie-chart.tsx
+    lib/
+      api.ts               # Axios/fetch wrapper with auth
+      auth.ts              # Token management
+      hooks/
+        use-auth.ts
+        use-accounts.ts
+        use-transactions.ts
+        use-dashboard.ts
+    stores/
+      auth-store.ts        # Zustand store for auth state
+      ui-store.ts          # Sidebar open/close, theme
+    types/
+      index.ts             # TypeScript interfaces matching Pydantic schemas
+  package.json
+  tailwind.config.ts
+  next.config.ts
+  tsconfig.json
+```
+
+**Key libraries:**
+```json
+{
+  "dependencies": {
+    "next": "^14",
+    "@tanstack/react-query": "^5",
+    "zustand": "^4",
+    "axios": "^1",
+    "recharts": "^2",
+    "date-fns": "^3",
+    "@radix-ui/react-*": "...",
+    "react-pluggy-connect": "latest"
+  }
+}
+```
+
+### FE-02: Layout + Sidebar
+
+The sidebar modules for VISOR:
+1. Dashboard (overview)
+2. Transacoes (transactions)
+3. Contas (accounts + Open Finance)
+4. Categorias (categories)
+5. Recorrencias (recurrences)
+6. Faturas (credit card bills)
+7. Projecoes (projections)
+8. Patrimonio (net worth)
+9. Configuracoes (settings + billing)
+
+### FE-03: Authentication Screens
+
+- Login page with email/password
+- Register page with full_name, email, password
+- Forgot password (email link)
+- React Query mutations for `/api/v1/auth/login`, `/register`, `/refresh`
+- Zustand store for token persistence in `localStorage`
+- Axios interceptor for auto-refresh on 401
+
+### FE-06: Accounts + Open Finance
+
+The Pluggy Connect Widget integration:
+
+```tsx
+// components/accounts/connect-widget.tsx
+import { PluggyConnect } from 'react-pluggy-connect';
+
+export function ConnectWidget({ onSuccess }: { onSuccess: (itemId: string) => void }) {
+  const { data: token } = useQuery({
+    queryKey: ['pluggy-connect-token'],
+    queryFn: () => api.post('/open-finance/connect-token'),
+  });
+
+  if (!token) return null;
+
+  return (
+    <PluggyConnect
+      connectToken={token.access_token}
+      onSuccess={(data) => onSuccess(data.item.id)}
+      onError={(error) => console.error(error)}
+    />
+  );
+}
+```
+
+---
+
+## PHASE 5 -- Production Infrastructure
+
+### SRV-03: IaC (Terraform)
+
+**New directory: `infra/`**
+
+```
+infra/
+  main.tf
+  variables.tf
+  outputs.tf
+  modules/
+    networking/     # VPC, subnets, security groups
+    compute/        # ECS Fargate or Railway/Render
+    database/       # Supabase (external) config
+    redis/          # ElastiCache or Upstash
+    cdn/            # CloudFront for frontend
+    monitoring/     # CloudWatch + Sentry
+```
+
+### SRV-06 + SRV-07 + SRV-08: API Gateway + SSL + Rate Limiting
+
+Options:
+1. **Nginx reverse proxy** (in Docker) with rate limiting config
+2. **AWS ALB** with WAF rules
+3. **Cloudflare** for SSL termination + DDoS + rate limiting
+
+**New file: `infra/nginx/nginx.conf`** with:
+- SSL termination (Let's Encrypt via certbot)
+- Rate limiting: `limit_req_zone` at 100 req/min per IP
+- Proxy pass to FastAPI on port 8000
+- WebSocket support for real-time updates
+
+### SRV-10: Monitoring
+
+**Modify: `backend/app/main.py`** -- add Sentry SDK:
+
+```python
+import sentry_sdk
+sentry_sdk.init(dsn=settings.SENTRY_DSN, environment=settings.APP_ENV)
+```
+
+Add `SENTRY_DSN` to `config.py`.
+
+### SRV-09: S3 Storage
+
+For CSV exports and report PDFs. Add `boto3` or `aioboto3` dependency. Create `backend/app/integrations/s3_client.py`.
+
+---
+
+## Complete File Map -- All Files to Create/Modify
+
+### New Files (25 files)
+
+| File | Phase | Purpose |
+|------|-------|---------|
+| `backend/app/integrations/__init__.py` | 1 | Package init |
+| `backend/app/integrations/pluggy_client.py` | 1 | Pluggy API wrapper |
+| `backend/app/schemas/pluggy.py` | 1 | Pluggy request/response DTOs |
+| `backend/app/services/pluggy_service.py` | 1 | Sync logic (accounts + transactions) |
+| `backend/app/api/v1/open_finance.py` | 1 | Connect token + manual sync endpoints |
+| `backend/app/api/v1/webhooks.py` | 1 | Pluggy + Stripe webhook handlers |
+| `backend/app/models/webhook_log.py` | 1 | Webhook audit log model |
+| `backend/app/schemas/recurrence.py` | 1 | Recurrence DTOs |
+| `backend/app/services/recurrence_service.py` | 1 | Recurrence detection engine |
+| `backend/app/api/v1/recurrences.py` | 1 | Recurrence CRUD + detection endpoint |
+| `backend/app/services/bill_service.py` | 1 | Credit card bill grouping |
+| `backend/app/api/v1/bills.py` | 1 | Credit card bill endpoints |
+| `backend/migrations/versions/0002_webhook_logs.py` | 1 | Alembic migration for webhook_logs |
+| `backend/tests/test_open_finance.py` | 1 | Pluggy integration tests |
+| `backend/tests/test_webhooks.py` | 1 | Webhook handler tests |
+| `backend/tests/test_recurrences.py` | 1 | Recurrence detection tests |
+| `backend/tests/test_tasks.py` | 1 | Celery task tests |
+| `backend/tests/test_bills.py` | 1 | Credit card bill tests |
+| `backend/app/services/projection_service.py` | 2 | Balance projection |
+| `backend/app/api/v1/projections.py` | 2 | Projection endpoints |
+| `backend/app/services/patrimony_service.py` | 2 | Net worth calculations |
+| `backend/app/api/v1/patrimony.py` | 2 | Net worth endpoints |
+| `backend/app/services/categorization_service.py` | 2 | Auto-categorization |
+| `backend/app/core/plan_limits.py` | 3 | Plan feature definitions |
+| `backend/app/core/plan_guard.py` | 3 | Plan enforcement dependency |
+| `backend/app/services/stripe_service.py` | 3 | Stripe billing service |
+| `backend/app/api/v1/billing.py` | 3 | Billing endpoints |
+
+### Files to Modify (8 files)
+
+| File | Changes |
+|------|---------|
+| `backend/app/core/config.py` | Add `PLUGGY_WEBHOOK_URL`, `PLUGGY_WEBHOOK_SECRET`, `STRIPE_PRICE_PRO`, `STRIPE_PRICE_PREMIUM`, `SENTRY_DSN` |
+| `backend/app/api/v1/router.py` | Include `open_finance`, `webhooks`, `recurrences`, `bills`, `projections`, `patrimony`, `billing` routers |
+| `backend/app/main.py` | Add Pluggy client cleanup in lifespan, Sentry init |
+| `backend/app/workers/tasks.py` | Replace stubs with working `sync_all_tenants` and `sync_tenant` |
+| `backend/app/models/__init__.py` | Add `WebhookLog` import |
+| `backend/app/models/recurrence.py` | Fix `transactions` relationship `back_populates`, add `tenant` relationship |
+| `backend/app/services/__init__.py` | No changes needed (imports are explicit) |
+| `backend/docker-compose.yml` | No changes needed for Phase 1 |
+
+---
+
+## Dependency Graph and Implementation Order
+
+```
+BE-04 (Pluggy Client) ──────────────────────────────────┐
+  |                                                       |
+  ├── BE-13 (Webhooks) ─── depends on BE-04              |
+  |                                                       |
+  ├── BE-14 (Celery Sync) ─── depends on BE-04           |
+  |                                                       |
+  ├── BE-07 (Recurrences) ─── depends on BE-04           |
+  |     |                                                 |
+  |     └── BE-09 (Projections) ─── depends on BE-07     |
+  |                                                       |
+  ├── BE-11 (Bills) ─── depends on BE-04                 |
+  |                                                       |
+  ├── BE-10 (Net Worth) ─── depends on BE-04             |
+  |                                                       |
+  └── BE-06 (Auto-Cat) ─── depends on BE-04              |
+                                                          |
+MT-04 (Plan Limits) ──── independent                      |
+  |                                                       |
+  └── MT-05/06 (Stripe) ─── depends on MT-04             |
+                                                          |
+FE-01 (Setup) ──── independent                            |
+  └── FE-02 to FE-16 ─── depends on FE-01 + backend APIs |
+                                                          |
+SRV-* (Infra) ──── independent, can parallel backend      |
+```
+
+**Recommended sprint order:**
+1. **Sprint 1 (1 week):** BE-04 (Pluggy client + service + endpoints + tests)
+2. **Sprint 2 (3-4 days):** BE-13 (Webhooks) + BE-14 (Celery tasks) -- they share the same sync logic
+3. **Sprint 3 (3-4 days):** BE-07 (Recurrences) + BE-11 (Bills)
+4. **Sprint 4 (2-3 days):** BE-09 (Projections) + BE-10 (Net Worth) + BE-06 (Auto-categorization)
+5. **Sprint 5 (2 days):** MT-04 + MT-05 + MT-06 (Plans + Stripe)
+6. **Sprint 6 (1 week):** FE-01 through FE-06 (core frontend)
+7. **Sprint 7 (1 week):** FE-07 through FE-16 (remaining screens)
+8. **Sprint 8 (3-4 days):** SRV-* (infrastructure)
+
+---
+
+## Key Risks and Mitigations
+
+1. **Pluggy API rate limits:** Use the Celery beat schedule (30 min) to spread sync load. Add exponential backoff with `tenacity` (already in dependencies).
+
+2. **Transaction dedup race conditions:** The `external_id` unique constraint is the safety net. Wrap upsert logic in a try/except for `IntegrityError` and skip duplicates.
+
+3. **Celery + async mismatch:** Celery tasks are synchronous. Use `asyncio.run()` in each task to bridge the gap. This creates a new event loop per task execution, which is fine for background processing.
+
+4. **Webhook security:** Pluggy webhooks have no HMAC signature like Stripe. Security relies on IP whitelisting (`177.71.238.212`) and optional custom headers. Add middleware to verify source IP in production.
+
+5. **Multi-tenant data leaks:** Every new service function MUST include `tenant_id` in every query. The existing RLS policies provide a second layer of defense at the database level.
+
+Sources:
+- [Pluggy API Reference](https://docs.pluggy.ai/)
+- [Pluggy Authentication](https://docs.pluggy.ai/docs/authentication)
+- [Pluggy Webhooks](https://docs.pluggy.ai/docs/webhooks)
+- [Pluggy Transactions](https://docs.pluggy.ai/docs/transactions)
+- [Pluggy Items](https://docs.pluggy.ai/docs/item)
+
+---
+
+### Critical Files for Implementation
+
+1. **`C:/Users/felipedovinhoo/OneDrive/01_Projetos/02_apps/02_app_fin/backend/app/integrations/pluggy_client.py`** (new) -- The Pluggy API client wrapper is the foundation; every Phase 1 task depends on it. Must handle auth token caching, pagination, error handling, and all Pluggy endpoints.
+
+2. **`C:/Users/felipedovinhoo/OneDrive/01_Projetos/02_apps/02_app_fin/backend/app/services/pluggy_service.py`** (new) -- Core sync logic for accounts and transactions, with deduplication via external_id. Called by webhooks, Celery tasks, and manual sync endpoints.
+
+3. **`C:/Users/felipedovinhoo/OneDrive/01_Projetos/02_apps/02_app_fin/backend/app/workers/tasks.py`** (existing, modify) -- Currently has stubs; must be replaced with working implementations that bridge async services into Celery's sync execution model.
+
+4. **`C:/Users/felipedovinhoo/OneDrive/01_Projetos/02_apps/02_app_fin/backend/app/services/recurrence_service.py`** (new) -- The recurrence detection algorithm (installments + fixed monthly). Critical for Phase 2 projections and the core value proposition of the app.
+
+5. **`C:/Users/felipedovinhoo/OneDrive/01_Projetos/02_apps/02_app_fin/backend/app/api/v1/router.py`** (existing, modify) -- Central router that wires all new endpoints. Every new API module must be registered here.
