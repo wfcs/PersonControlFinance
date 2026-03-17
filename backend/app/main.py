@@ -25,7 +25,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 
 app = FastAPI(
-    title="Visor API",
+    title="FinControl API",
     description="API de controle financeiro pessoal com Open Finance",
     version="0.1.0",
     docs_url="/docs",

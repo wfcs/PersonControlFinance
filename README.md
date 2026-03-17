@@ -1,4 +1,4 @@
-# Visor - Controle Financeiro Pessoal com Open Finance
+# FinControl - Controle Financeiro Pessoal com Open Finance
 
 ![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.12%2B-blue.svg)
@@ -6,7 +6,7 @@
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Status](https://img.shields.io/badge/status-in_development-yellow.svg)
 
-**Visor** é uma aplicação web de código aberto para controle financeiro pessoal que integra com **Open Finance (Brasil)** via Pluggy. Oferece visibilidade completa sobre suas finanças com dashboards inteligentes, análises preditivas e detecção automática de padrões de gastos.
+**FinControl** é uma aplicação web de código aberto para controle financeiro pessoal que integra com **Open Finance (Brasil)** via Pluggy. Oferece visibilidade completa sobre suas finanças com dashboards inteligentes, análises preditivas e detecção automática de padrões de gastos.
 
 > 🚀 **Status:** Em desenvolvimento ativo | **Última atualização:** Março 2026
 
@@ -370,4 +370,4 @@ MIT © 2026 wfcs
 
 **Feito com ❤️ para controle financeiro pessoal**
 
-*"Visualize suas finanças, entenda seus padrões, conquiste seus objetivos."*
+*"FinControl: Visualize suas finanças, entenda seus padrões, conquiste seus objetivos."*

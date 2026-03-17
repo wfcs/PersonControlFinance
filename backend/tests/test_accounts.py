@@ -64,10 +64,10 @@ async def test_account_isolation(client: AsyncClient):
     """Garante que usuários de tenants diferentes não veem contas alheias."""
     # Tenant A
     await client.post("/api/v1/auth/register", json={
-        "email": "tenantA@visor.app", "password": "Senha@123"
+        "email": "tenantA@fincontrol.app", "password": "Senha@123"
     })
     res_a = await client.post("/api/v1/auth/login", json={
-        "email": "tenantA@visor.app", "password": "Senha@123"
+        "email": "tenantA@fincontrol.app", "password": "Senha@123"
     })
     token_a = res_a.json()["access_token"]
 
@@ -77,10 +77,10 @@ async def test_account_isolation(client: AsyncClient):
 
     # Tenant B
     await client.post("/api/v1/auth/register", json={
-        "email": "tenantB@visor.app", "password": "Senha@123"
+        "email": "tenantB@fincontrol.app", "password": "Senha@123"
     })
     res_b = await client.post("/api/v1/auth/login", json={
-        "email": "tenantB@visor.app", "password": "Senha@123"
+        "email": "tenantB@fincontrol.app", "password": "Senha@123"
     })
     token_b = res_b.json()["access_token"]
 

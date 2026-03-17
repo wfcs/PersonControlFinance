@@ -38,7 +38,7 @@ class Settings(BaseSettings):
 
     # Email
     SENDGRID_API_KEY: str = ""
-    EMAIL_FROM: str = "noreply@visor.app"
+    EMAIL_FROM: str = "noreply@fincontrol.app"
 
     # CORS
     CORS_ORIGINS: str | list[str] = ["http://localhost:3000"]

@@ -8,7 +8,7 @@ from httpx import AsyncClient
 @pytest.mark.asyncio
 async def test_register(client: AsyncClient):
     res = await client.post("/api/v1/auth/register", json={
-        "email": "teste@visor.app",
+        "email": "teste@fincontrol.app",
         "password": "Senha@123",
         "full_name": "Usuário Teste",
     })
@@ -21,11 +21,11 @@ async def test_register(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_login(client: AsyncClient):
     await client.post("/api/v1/auth/register", json={
-        "email": "login@visor.app",
+        "email": "login@fincontrol.app",
         "password": "Senha@123",
     })
     res = await client.post("/api/v1/auth/login", json={
-        "email": "login@visor.app",
+        "email": "login@fincontrol.app",
         "password": "Senha@123",
     })
     assert res.status_code == 200
@@ -35,11 +35,11 @@ async def test_login(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_login_wrong_password(client: AsyncClient):
     await client.post("/api/v1/auth/register", json={
-        "email": "errado@visor.app",
+        "email": "errado@fincontrol.app",
         "password": "Senha@123",
     })
     res = await client.post("/api/v1/auth/login", json={
-        "email": "errado@visor.app",
+        "email": "errado@fincontrol.app",
         "password": "SenhaErrada",
     })
     assert res.status_code == 401
@@ -48,11 +48,11 @@ async def test_login_wrong_password(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_me(client: AsyncClient):
     reg = await client.post("/api/v1/auth/register", json={
-        "email": "me@visor.app",
+        "email": "me@fincontrol.app",
         "password": "Senha@123",
         "full_name": "Walisson",
     })
     token = reg.json()["access_token"]
     res = await client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"})
     assert res.status_code == 200
-    assert res.json()["email"] == "me@visor.app"
+    assert res.json()["email"] == "me@fincontrol.app"
