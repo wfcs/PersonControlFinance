@@ -19,7 +19,9 @@
       "Bash(npm --version)",
       "Bash(where npm.cmd)",
       "Bash(where npx.cmd)",
-      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d.get\\(''''bin'''',{}\\)\\)\")"
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d.get\\(''''bin'''',{}\\)\\)\")",
+      "Bash(dir /s /b \"C:\\\\Users\\\\felipedovinhoo\\\\OneDrive\\\\01_Projetos\\\\02_apps\\\\02_app_fin\\\\frontend\\\\src\\\\app\\\\*.tsx\")",
+      "Bash(ls next.config.*)"
     ]
   }
 }
