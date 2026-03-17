@@ -1,288 +1,169 @@
-# 📋 Pendências - FinControl
+# Pendencias - FinControl
 
-**Data:** 16 de março de 2026  
-**Status:** Em desenvolvimento acelerado  
-**Versão:** 0.1.0  
-**Última atualização:** 16 de março de 2026 - Gaps #2, #3, #10 completados
-
----
-
-## 🚩 Gaps Pendentes (Prioridade Atual)
-
-### 4. **Middleware de Autenticação Global**
-- **Status:** ⏳ PRÓXIMO A IMPLEMENTAR
-- **Impacto:** Alto
-- **Descrição:** Endpoint que requerem auth devem validad tokens consistentemente em toda API
-- **Arquivos envolvidos:**
-  - `backend/app/core/security.py` - Lógica JWT (já existe)
-  - `backend/app/core/deps.py` - Dependência AuthUser (já existe)
-  - `backend/app/main.py` - App FastAPI (TenantContextMiddleware já integrado)
-  - `backend/app/api/v1/` - Todos os endpoints
-- **O que falta:**
-  - ✗ Token expiration validation consistente
-  - ✗ Logout com token blacklist (Redis)
-  - ✗ CORS específico por ambiente
-  - ✗ Rate limiting por usuário
-  - ✗ Refresh token automático no frontend (já existe)
-  - ✗ Testes de auth em endpoints
-- **Arquivos já prontos para uso:**
-  - ✅ TenantContextMiddleware (já injetado)
-  - ✅ AuthUser dependency
-  - ✅ JWT encode/decode
-  - ✅ Refresh token flow
-- **Prioridade:** 🔴 ALTA (RECOMENDADO PARA AMANHÃ)
+**Data:** 17 de marco de 2026
+**Status:** Em desenvolvimento acelerado
+**Versao:** 0.1.0
+**Ultima atualizacao:** 17 de marco de 2026 - BE-15, FE-16, MT-09 completados
 
 ---
 
-### 1. **Testes de Integração dos Endpoints**
-- **Status:** ⏳ BLOQUEADO (aguarda Gap #4)
-- **Impacto:** Alto
-- **Descrição:** Todos os endpoints precisam de testes de integração completos
-- **Arquivos envolvidos:**
-  - `backend/tests/conftest.py` - Fixtures (parcial)
-  - `backend/tests/test_*.py` - Testes por endpoint
-  - `backend/tests/test_rls_isolation.py` - ✅ Testes RLS já existem
-- **O que falta:**
-  - ✗ Fixtures para AsyncClient
-  - ✗ Database de teste isolado
-  - ✗ User/tenant factories
-  - ✗ JWT token mocks
-  - ✗ Testes de todos endpoints (POST, GET, PATCH, DELETE)
-  - ✗ Testes de validação de planos
-  - ✗ Edge cases e error handling
-- **Prioridade:** 🔴 ALTA (DEPOIS DE #4)
+## Resumo Executivo
+
+### Status Geral: 11/12 gaps completados (92%)
+
+```
+COMPLETO (11): Gap #1, #2, #3, #4, #5, #6, #7, #8, #10, #11, #12
+PENDENTE (1):  Gap #9 (Terraform IaC)
+EM ABERTO:     BE-16 (AI Assistant) + Infra de producao
+```
 
 ---
 
-### 7. **Integração Stripe (Billing)**
-- **Status:** ⏳ AGUARDANDO
-- **Impacto:** Alto (para monetização)
-- **Descrição:** Checkout, webhooks e atualização de planos
-- **Arquivos envolvidos:**
-  - `backend/app/services/stripe_service.py` - ✅ Service existe
-  - `backend/app/api/v1/billing.py` - Endpoints (vazio)
-  - `backend/app/models/tenant.py` - ✅ Stripe IDs já existem
-- **O que falta:**
-  - ✗ Endpoint POST /api/v1/billing/checkout (criar session)
-  - ✗ Endpoint POST /api/v1/billing/webhook (receber eventos)
-  - ✗ Lógica de atualização de plano após pagamento
-  - ✗ Sincronização de status com tenants
-  - ✗ Testes de pagamento (mock Stripe)
-  - ✗ Email de confirmação
-  - ✗ Portal de gerenciamento do cliente
-- **Prioridade:** 🔴 ALTA (NECESSÁRIO PARA PRODUÇÃO)
+## Gaps Completados
+
+| Gap | Titulo | Status | Data |
+|-----|--------|--------|------|
+| 1 | Testes de Integracao | COMPLETO | 17 mar |
+| 2 | Frontend API Integration | COMPLETO | 16 mar |
+| 3 | Multi-tenant RLS Security | COMPLETO | 16 mar |
+| 4 | Middleware de Autenticacao | COMPLETO | 17 mar |
+| 5 | Webhooks Open Finance | COMPLETO | 17 mar |
+| 6 | Celery Beat Jobs | COMPLETO | 17 mar |
+| 7 | Stripe Billing | COMPLETO | 17 mar |
+| 8 | CI/CD Pipeline | COMPLETO | 17 mar |
+| 10 | Frontend Pages (17 paginas) | COMPLETO | 17 mar |
+| 11 | Plan Guard | COMPLETO | 17 mar |
+| 12 | Conftest e Setup de Testes | COMPLETO | 17 mar |
+| - | README profissional | COMPLETO | 16 mar |
+| - | Rename: Visor -> FinControl | COMPLETO | 16 mar |
+| - | BE-15: Email Service (SendGrid) | COMPLETO | 17 mar |
+| - | FE-16: Onboarding | COMPLETO | 17 mar |
+| - | MT-09: Admin Panel | COMPLETO | 17 mar |
+
+### Implementados em 17 mar (sessao 2)
+
+**BE-15 - Email Service (SendGrid):**
+- `backend/app/services/email_service.py` - Servico completo com 5 templates:
+  - `send_email()` - envio generico
+  - `send_welcome()` - boas-vindas apos registro
+  - `send_password_reset()` - recuperacao de senha
+  - `send_plan_upgrade()` - confirmacao de upgrade
+  - `send_sync_error()` - erro de sincronizacao bancaria
+- `backend/app/workers/tasks.py` - 4 Celery tasks de email (welcome, notification, plan_upgrade, sync_error)
+- `backend/app/api/v1/notifications.py` - Endpoints POST /notifications/send-test e /resend-welcome
+- Integrado no fluxo de registro (envia welcome email via Celery)
+- Testes em `backend/tests/test_email_service.py` (5 testes)
+
+**FE-16 - Onboarding:**
+- `frontend/src/app/(dashboard)/onboarding/page.tsx` - Fluxo de 4 etapas:
+  - Step 0: Boas-vindas personalizado com nome do usuario
+  - Step 1: Cadastro da primeira conta bancaria
+  - Step 2: Selecao de objetivos financeiros
+  - Step 3: Tela de conclusao com redirecionamento
+- Registro agora redireciona para `/onboarding` ao inves de `/dashboard`
+- Barra de progresso visual entre steps
+
+**MT-09 - Admin Panel:**
+- `backend/app/api/v1/admin.py` - 6 endpoints protegidos por `require_admin`:
+  - GET /admin/stats - Estatisticas globais (tenants, users, accounts, transactions)
+  - GET /admin/tenants - Listagem com paginacao e filtro por plano
+  - PATCH /admin/tenants/{id} - Alterar plano/status
+  - GET /admin/users - Listagem com paginacao e filtro
+  - PATCH /admin/users/{id} - Ativar/desativar/verificar
+  - GET /admin/webhook-logs - Logs de webhooks
+- Controle de acesso via `ADMIN_EMAILS` (env var, comma-separated)
+- `frontend/src/app/(dashboard)/admin/page.tsx` - Dashboard admin com:
+  - Cards de estatisticas (tenants, users, accounts, transactions)
+  - Distribuicao por plano (FREE/PRO/PREMIUM)
+  - Tabela de tenants com edicao de plano inline
+  - Tabela de usuarios com ativacao/desativacao
+  - Tela de acesso negado para nao-admins
+- Link "Admin" adicionado ao sidebar
+- Testes em `backend/tests/test_admin.py` (7 testes)
 
 ---
 
-## 🟡 Gaps de Média Prioridade
-
-### 5. **Webhooks Open Finance**
-- **Status:** ⚠️ Estrutura pronta, não testada
-- **Impacto:** Médio (sincronização em tempo real)
-- **Descrição:** Processar eventos de contas abertas/fechadas do Open Finance
-- **Arquivos envolvidos:**
-  - `backend/app/api/v1/webhooks.py` - ✅ Endpoint existe
-  - `backend/app/workers/tasks.py` - ✅ Tasks existem
-  - `backend/app/services/pluggy_service.py` - ✅ Integração existe
-- **O que falta:**
-  - ✗ Validação de assinatura Pluggy
-  - ✗ Retry automático em falhas
-  - ✗ Logging estruturado
-  - ✗ Testes end-to-end com Pluggy mock
-  - ✗ Monitoramento de processamento
-- **Prioridade:** 🟡 MÉDIA
-
----
-
-### 6. **Job de Sincronização Periódica (Celery Beat)**
-- **Status:** ❌ Não implementado
-- **Impacto:** Médio (dados atualizados)
-- **Descrição:** Sincronizar contas/transações periodicamente (mesmo sem webhooks)
-- **Arquivos envolvidos:**
-  - `backend/app/workers/celery_app.py` - ✅ Celery configurado
-  - `backend/app/workers/tasks.py` - ✅ Tasks estruturadas
-  - `docker-compose.yml` - ✅ Serviço beat existe
-- **O que falta:**
-  - ✗ Agendamento de tasks (a cada 1h, 6h, diariamente)
-  - ✗ Tenants priorities
-  - ✗ Error handling e retry
-  - ✗ Logging de execução
-  - ✗ Monitoramento de status
-  - ✗ Tests de agendamento
-- **Prioridade:** 🟡 MÉDIA
-
----
-
-### 8. **CI/CD Pipeline**
-- **Status:** ❌ Não existe
-- **Impacto:** Médio (automação)
-- **Descrição:** Executar testes, build, deploy automaticamente
-- **Arquivos envolvidos:**
-  - `.github/workflows/` - NÃO EXISTE
-- **O que falta:**
-  - ✗ Workflow: lint (ruff + black)
-  - ✗ Workflow: tests (pytest com coverage)
-  - ✗ Workflow: build Docker
-  - ✗ Workflow: push para registry
-  - ✗ Workflow: deploy em staging
-  - ✗ Status badges no README
-- **Prioridade:** 🟡 MÉDIA (importante para produção)
-
----
+## Gaps Pendentes
 
 ### 9. **Infrastructure as Code (IaC)**
-- **Status:** ❌ Não existe
-- **Impacto:** Médio (deploy em produção)
-- **Descrição:** Terraform para provisionar infra (DB, Redis, App)
-- **Arquivos envolvidos:**
-  - `terraform/` - NÃO EXISTE
-  - `docs/DEPLOY.md` - Documentação de deployment
+- **Status:** Nao existe
+- **Impacto:** Medio (deploy em producao)
+- **Descricao:** Terraform para provisionar infra (DB, Redis, App)
 - **O que falta:**
-  - ✗ Terraform modules (networking, database, app)
-  - ✗ Variáveis de ambiente por stage
-  - ✗ Auto-scaling configs
-  - ✗ Backup policies
-  - ✗ Monitoring setup
-  - ✗ Documentação de deploy
-- **Prioridade:** 🟡 MÉDIA
+  - Terraform modules (networking, database, app)
+  - Variaveis de ambiente por stage
+  - Auto-scaling configs
+  - Backup policies
+  - Monitoring setup
+  - Documentacao de deploy
+- **Prioridade:** MEDIA
 
 ---
 
-### 11. **Plan Guard - Validação de Planos**
-- **Status:** ⚠️ Arquivo criado, não integrado
-- **Impacto:** Médio (necessário para billing)
-- **Descrição:** Validar limites de recursos por plano em endpoints
-- **Arquivos envolvidos:**
-  - `backend/app/core/plan_guard.py` - ✅ Validator existe
-  - `backend/app/core/plan_limits.py` - ✅ Limites definidos
-  - Endpoints - SEM VALIDAÇÃO
-- **O que falta:**
-  - ✗ Decorator @check_plan_limit("resource", "limit_key")
-  - ✗ Aplicação em endpoints críticos (accounts, connections)
-  - ✗ Mensagens de erro claras (upgrade needed)
-  - ✗ Testes de limite por plano
-  - ✗ Dashboard de uso/limites para usuário
-- **Prioridade:** 🟡 MÉDIA
+## Tarefas Adicionais Pendentes
+
+### Backend
+- **BE-16: AI Assistant** - Nao implementado
+
+### Infraestrutura de Producao
+- SRV-03: Terraform IaC (= Gap #9)
+- SRV-04: PostgreSQL gerenciado + backups
+- SRV-06: Nginx reverse proxy
+- SRV-07: SSL (Let's Encrypt / Cloudflare)
+- SRV-08: Rate limiting (nginx limit_req_zone)
+- SRV-09: S3/R2 para exports
+- SRV-10: Sentry + logs estruturados
+- SRV-11: Secrets manager
+- SRV-12: Autoscaling
 
 ---
 
-### 12. **Conftest e Setup Completo de Testes**
-- **Status:** ⚠️ Arquivo vazio
-- **Impacto:** Médio (facilita testes)
-- **Descrição:** Fixtures reutilizáveis para toda suíte de testes
-- **Arquivos envolvidos:**
-  - `backend/tests/conftest.py` - VAZIO
-- **O que falta:**
-  - ✗ @pytest.fixture async def db_session
-  - ✗ @pytest.fixture async def client (AsyncClient)
-  - ✗ @pytest.fixture async def user_factory
-  - ✗ @pytest.fixture async def tenant_factory
-  - ✗ @pytest.fixture def valid_jwt_token
-  - ✗ Setup/teardown de DB de teste
-  - ✗ Mocks para Pluggy, Stripe
-- **Prioridade:** 🟡 MÉDIA
+## Arquitetura Atual (Implementada)
+
+### Backend (15/16 tasks completos)
+- FastAPI + SQLAlchemy 2.0 async + Alembic
+- Celery + Redis (workers + beat scheduler)
+- JWT auth + refresh tokens + TenantContextMiddleware
+- Pluggy Open Finance: client, service, sync, webhooks
+- Stripe: checkout, portal, subscription, webhooks
+- SendGrid: email service com 5 templates + Celery tasks
+- Admin Panel: stats, tenants, users, webhook-logs (RBAC por ADMIN_EMAILS)
+- APIs: dashboard, contas, transacoes, categorias, recorrencias, faturas, projecoes, patrimonio, notificacoes, admin
+- Plan Guard: limites por plano (FREE/PRO/PREMIUM)
+- Auto-categorizacao: 71 regras para merchants BR
+- Testes: 30+ testes com SQLite in-memory
+
+### Frontend (17/17 pages completas)
+- Next.js App Router + Tailwind + shadcn/ui
+- React Query hooks para toda API
+- Recharts para visualizacoes
+- 17 paginas: login, register, onboarding, dashboard, transactions, accounts, cash-flow, categories, goals, invoices, net-worth, plans, projection, recurring, reports, admin + layouts
+
+### Infra (3/12 tasks completos)
+- Docker + docker-compose
+- CI/CD (.github/workflows/ci.yml)
+- Redis configurado
 
 ---
 
-## 📊 Resumo Executivo
+## Plano Recomendado (Proximos Passos)
 
-### Status Geral: 3/12 gaps completados (25%)
+### FASE 1 - Producao Minima (Prioridade)
+1. Gap #9 - Terraform IaC
+2. SRV-04 - PostgreSQL gerenciado
+3. SRV-06/07 - Nginx + SSL
+4. SRV-10 - Sentry + logs
 
-```
-✅ COMPLETO (3):  Gap #2, #3, #10
-🔴 ALTA (3):     Gap #1, #4, #7  
-🟡 MÉDIA (5):    Gap #5, #6, #8, #9, #11, #12
-⏳ BLOQUEADO:    Gap #1 (aguarda #4)
-```
+### FASE 2 - Hardening
+5. SRV-08 - Rate limiting
+6. SRV-11 - Secrets manager
 
-### Avanços Realizados (16 de mar 2026)
-
-| Gap | Título | Status |
-|-----|--------|--------|
-| 2 | Frontend API Integration | ✅ COMPLETO |
-| 3 | Multi-tenant RLS Security | ✅ COMPLETO |
-| 10 | Frontend Pages (11 páginas) | ✅ COMPLETO |
-| - | README profissional | ✅ COMPLETO |
-| - | Rename: Visor → FinControl | ✅ COMPLETO |
+### FASE 3 - Features Extras
+7. BE-16 - AI assistant
+8. SRV-09 - S3/R2 exports
+9. SRV-12 - Autoscaling
 
 ---
 
-## 🎯 Plano Recomendado
-
-### FASE 1 - Segurança (Hoje + Amanhã)
-1. ✅ Gap #3 - RLS Security - CONCLUÍDO
-2. 🔴 Gap #4 - Auth Middleware - **COMEÇAR AMANHÃ**
-3. 🔴 Gap #1 - Integration Tests (após #4)
-
-### FASE 2 - Monetização (Próxima semana)
-4. 🔴 Gap #7 - Stripe Billing
-5. 🟡 Gap #11 - Plan Guard
-
-### FASE 3 - Automação (Próxima semana)
-6. 🟡 Gap #6 - Celery Beat Jobs
-7. 🟡 Gap #5 - Open Finance Webhooks
-8. 🟡 Gap #8 - CI/CD Pipeline
-
-### FASE 4 - Infraestrutura (Futuro)
-9. 🟡 Gap #9 - Terraform IaC
-
----
-
-## ✨ Destaques da Semana
-
-### Implementado (16 de mar):
-- ✅ **11 Dashboard Pages** com Recharts visualizações
-- ✅ **RLS Multi-tenant** com PostgreSQL + Middleware
-- ✅ **React Query Hooks** para toda API (11 hooks personalizados)
-- ✅ **JWT + Refresh Token** flow completo
-- ✅ **README Profissional** (400+ linhas)
-- ✅ **App Rename** Visor → FinControl
-
-### Commits da Semana:
-1. `4408a95` - Gap #2: Frontend API Integration
-2. `8de4927` - Gap #10: Dashboard Pages (11 páginas)
-3. `3a5375f` - Gap #3: Multi-tenant RLS Security
-4. `35c9bc0` - README profissional
-5. `6c69b16` - Rename Visor → FinControl
-
----
-
-## 📝 Como Contribuir Amanhã
-
-### Gap #4 - Middleware de Autenticação (PRÓXIMO)
-
-```bash
-# 1. Criar branch
-git checkout -b gap/4-auth-middleware
-
-# 2. Implementar:
-# - Token expiration validation
-# - Logout endpoint com Redis blacklist
-# - Rate limiting decorator
-# - CORS configurável
-
-# 3. Testar
-pytest backend/tests/test_auth_middleware.py -v
-
-# 4. Commit
-git commit -m "feat: Auth Middleware (Gap #4)"
-
-# 5. Atualizar pendencias.md
-```
-
-### Checklist Pre-Implementation
-
-- [ ] Ler este arquivo
-- [ ] Verificar `backend/app/core/security.py`
-- [ ] Entender TenantContextMiddleware pattern
-- [ ] Revisar tests em `backend/tests/test_auth.py`
-- [ ] Criar fixtures em conftest.py se necessário
-
----
-
-**Próxima atualização:** Após completar Gap #4  
-**Estimativa:** 17 de março de 2026
-
----
-
-**Última atualização:** 16 de março de 2026
+**Proxima atualizacao:** Apos deploy em staging
+**Ultima atualizacao:** 17 de marco de 2026

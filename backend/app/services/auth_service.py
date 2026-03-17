@@ -36,6 +36,18 @@ async def register(data: RegisterRequest, db: AsyncSession) -> TokenResponse:
     db.add(user)
     await db.flush()
 
+    # Envia e-mail de boas-vindas em background (Celery)
+    import logging
+    import os
+
+    if os.getenv("TESTING") != "1":
+        try:
+            from app.workers.tasks import send_welcome_email
+
+            send_welcome_email.delay(data.email, data.full_name)
+        except Exception:
+            logging.getLogger(__name__).debug("Celery unavailable, skipping welcome email")
+
     return _build_tokens(user.id, tenant.id, user.email)
 
 

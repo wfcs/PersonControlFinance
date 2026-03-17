@@ -76,7 +76,36 @@ async def _sync_tenant_async(tenant_id: UUID) -> None:
 
 
 @celery_app.task(name="app.workers.tasks.send_notification")
-def send_notification(user_id: str, subject: str, body: str) -> None:
+def send_notification(to_email: str, subject: str, html_body: str) -> None:
     """Envia e-mail transacional via SendGrid."""
-    # TODO: BE-15 — integração SendGrid
-    pass
+    from app.services import email_service
+
+    email_service.send_email(to_email, subject, html_body)
+
+
+@celery_app.task(name="app.workers.tasks.send_welcome_email")
+def send_welcome_email(to_email: str, full_name: str | None = None) -> None:
+    """Envia e-mail de boas-vindas após registro."""
+    from app.services import email_service
+
+    email_service.send_welcome(to_email, full_name)
+
+
+@celery_app.task(name="app.workers.tasks.send_plan_upgrade_email")
+def send_plan_upgrade_email(
+    to_email: str, full_name: str | None, plan: str
+) -> None:
+    """Envia e-mail de confirmação de upgrade."""
+    from app.services import email_service
+
+    email_service.send_plan_upgrade(to_email, full_name, plan)
+
+
+@celery_app.task(name="app.workers.tasks.send_sync_error_email")
+def send_sync_error_email(
+    to_email: str, full_name: str | None, error_detail: str
+) -> None:
+    """Envia notificação de erro de sincronização."""
+    from app.services import email_service
+
+    email_service.send_sync_error(to_email, full_name, error_detail)

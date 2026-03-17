@@ -1,7 +1,25 @@
 {
   "permissions": {
     "allow": [
-      "WebSearch"
+      "WebSearch",
+      "Bash(ls -la /c/Users/felipedovinhoo/OneDrive/01_Projetos/02_apps/02_app_fin/frontend/src/app/\\\\\\(dashboard\\\\\\)/)",
+      "Bash(xargs grep:*)",
+      "Bash(grep -E \"\\\\.py$\")",
+      "Bash(ls \"C:\\\\Users\\\\felipedovinhoo\\\\OneDrive\\\\01_Projetos\\\\02_apps\\\\02_app_fin\\\\frontend\\\\src\\\\app\\\\\\(dashboard\\)\"\")",
+      "Bash(python -m pytest tests/test_email_service.py tests/test_admin.py -v)",
+      "Bash(pip install:*)",
+      "Bash(timeout 15 python -c \"from app.services.email_service import send_email; print\\(''OK: email_service imports''\\)\")",
+      "Bash(timeout 15 python -c \"from app.api.v1.admin import router; print\\(''OK: admin imports, routes:'', [r.path for r in router.routes]\\)\")",
+      "Bash(timeout 30 python -m pytest tests/test_email_service.py::test_send_email_without_api_key tests/test_email_service.py::test_send_welcome_without_api_key tests/test_email_service.py::test_send_plan_upgrade_without_api_key -v)",
+      "Bash(timeout 60 python -m pytest tests/test_admin.py -v --timeout=30)",
+      "Bash(timeout 60 python -m pytest tests/test_admin.py::test_admin_stats_requires_admin -v)",
+      "Bash(TESTING=1 timeout 60 python -m pytest tests/test_email_service.py tests/test_admin.py -v)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\(''''scripts'''',{}\\), indent=2\\)\\)\")",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(npm --version)",
+      "Bash(where npm.cmd)",
+      "Bash(where npx.cmd)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d.get\\(''''bin'''',{}\\)\\)\")"
     ]
   }
 }

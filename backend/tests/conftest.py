@@ -2,6 +2,10 @@
 Fixtures compartilhadas entre todos os testes.
 Usa SQLite em memória para não precisar de PostgreSQL no CI.
 """
+import os
+
+os.environ["TESTING"] = "1"
+
 import pytest
 import pytest_asyncio
 from httpx import AsyncClient, ASGITransport

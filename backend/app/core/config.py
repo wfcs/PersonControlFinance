@@ -40,6 +40,9 @@ class Settings(BaseSettings):
     SENDGRID_API_KEY: str = ""
     EMAIL_FROM: str = "noreply@fincontrol.app"
 
+    # Admin
+    ADMIN_EMAILS: str = ""  # comma-separated list of admin emails
+
     # CORS
     CORS_ORIGINS: str | list[str] = ["http://localhost:3000"]
 

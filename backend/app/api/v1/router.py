@@ -1,12 +1,14 @@
 from fastapi import APIRouter
 
 from app.api.v1 import (
+    admin,
     auth,
     accounts,
     billing,
     bills,
     categories,
     dashboard,
+    notifications,
     open_finance,
     patrimony,
     projections,
@@ -29,3 +31,5 @@ api_router.include_router(bills.router)
 api_router.include_router(projections.router)
 api_router.include_router(patrimony.router)
 api_router.include_router(billing.router)
+api_router.include_router(notifications.router)
+api_router.include_router(admin.router)
