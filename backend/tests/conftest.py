@@ -74,6 +74,13 @@ async def auth_client(client: AsyncClient) -> dict:
 
 
 @pytest_asyncio.fixture
+async def db_session() -> AsyncSession:
+    """Fornece uma sessão de banco de dados para testes."""
+    async with TestSessionLocal() as session:
+        yield session
+
+
+@pytest_asyncio.fixture
 async def sample_account(auth_client: dict) -> dict:
     """Cria uma conta e retorna o JSON da resposta."""
     client: AsyncClient = auth_client["client"]
