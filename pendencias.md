@@ -1,304 +1,287 @@
-# 📋 Pendências - App Fin
+# 📋 Pendências - FinControl
 
 **Data:** 16 de março de 2026  
-**Status:** Em desenvolvimento  
-**Versão:** 0.1.0
+**Status:** Em desenvolvimento acelerado  
+**Versão:** 0.1.0  
+**Última atualização:** 16 de março de 2026 - Gaps #2, #3, #10 completados
 
 ---
 
-## 🚩 Gaps Críticos
+## 🚩 Gaps Pendentes (Prioridade Atual)
 
-### 1. **Testes de Integração dos Endpoints**
-- **Status:** ❌ Não implementado
+### 4. **Middleware de Autenticação Global**
+- **Status:** ⏳ PRÓXIMO A IMPLEMENTAR
 - **Impacto:** Alto
-- **Descrição:** Os endpoints da API estão criados mas não têm testes de integração reais
+- **Descrição:** Endpoint que requerem auth devem validad tokens consistentemente em toda API
 - **Arquivos envolvidos:**
-  - `backend/tests/conftest.py` - Fixtures necessárias
-  - `backend/tests/test_*.py` - Todos os testes
+  - `backend/app/core/security.py` - Lógica JWT (já existe)
+  - `backend/app/core/deps.py` - Dependência AuthUser (já existe)
+  - `backend/app/main.py` - App FastAPI (TenantContextMiddleware já integrado)
+  - `backend/app/api/v1/` - Todos os endpoints
 - **O que falta:**
-  - ✗ Setup de database de teste
-  - ✗ Fixtures para usuários/tenants
-  - ✗ Mock de Open Finance
-  - ✗ Validação de respostas HTTP
-  - ✗ Testes de autenticação JWT
-- **Prioridade:** 🔴 ALTA
-
----
-
-### 2. **Frontend Desconectado da API**
-- **Status:** ✅ IMPLEMENTADO
-- **Impacto:** Alto
-- **Descrição:** Componentes e hooks agora estão completamente conectados à API
-- **Arquivos envolvidos:**
-  - `frontend/src/lib/api.ts` - ✅ Axios instance com interceptadores
-  - `frontend/src/lib/auth.ts` - ✅ Métodos de autenticação
-  - `frontend/src/hooks/*.ts` - ✅ Todos os hooks com chamadas HTTP
-  - `frontend/src/stores/auth-store.ts` - ✅ Store Zustand completo
-  - `frontend/.env.example` - ✅ Documentação de variáveis
-- **O que foi implementado:**
-  - ✅ Endpoints configurados no `api.ts` com interceptadores
-  - ✅ React Query hooks para autenticação, contas, transações, categorias, etc
-  - ✅ Tratamento de erros HTTP com fallback
-  - ✅ Auth token nos headers automaticamente
-  - ✅ Refresh token flow com retry queue
-  - ✅ Hooks adicionais: use-categories, use-patrimony, use-projections, use-recurrences, use-bills, use-open-finance
-  - ✅ Documentação completa em HOOKS_DOCUMENTATION.md
-  - ✅ Logout com invalidação de cache
-- **Prioridade:** 🔴 ALTA → ✅ COMPLETO
-
----
-
-### 3. **Segurança Multi-tenant**
-- **Status:** ✅ IMPLEMENTADO
-- **Impacto:** Alto
-- **Descrição:** RLS (Row-Level Security) completamente implementado no PostgreSQL com isolamento automático
-- **Arquivos envolvidos:**
-  - `backend/app/models/base.py` - ✅ TenantMixin criado
-  - `backend/app/core/deps.py` - ✅ Dependência de tenant
-  - `backend/app/core/tenant_context.py` - ✅ NEW: Context variables e helpers
-  - `backend/app/core/tenant_middleware.py` - ✅ NEW: Middleware de contexto
-  - `backend/app/core/tenant_decorators.py` - ✅ NEW: Decorators de validação
-  - `backend/migrations/versions/0003_rls_policies.py` - ✅ NEW: Migração RLS
-  - `backend/tests/test_rls_isolation.py` - ✅ NEW: Testes de isolamento
-  - `backend/MULTITENANT_RLS.md` - ✅ NEW: Documentação completa
-  - `backend/SETP_MULTITENANT_EXAMPLE.py` - ✅ NEW: Exemplos de implementação
-- **O que foi implementado:**
-  - ✅ RLS policies no PostgreSQL (SELECT, INSERT, UPDATE, DELETE)
-  - ✅ Função PostgreSQL: get_current_tenant_id()
-  - ✅ Context variables Python por request
-  - ✅ Middleware TenantContextMiddleware automático
-  - ✅ Decorators: @require_tenant_context e @validate_tenant_access
-  - ✅ Helper: apply_tenant_context() injeta tenant_id em toda request
-  - ✅ Testes validando isolamento cross-tenant
-  - ✅ Bloqueio de acesso cross-tenant em banco/aplicação
-  - ✅ Row-level filtering automático via RLS
-  - ✅ Documentação com troubleshooting e boas práticas
-- **Prioridade:** 🔴 ALTA → ✅ COMPLETO
-
----
-
-### 4. **Middleware de Autenticação**
-- **Status:** ⚠️ Parcialmente implementado
-- **Impacto:** Alto
-- **Descrição:** JWT básico existe mas não está aplicado consistentemente
-- **Arquivos envolvidos:**
-  - `backend/app/core/security.py` - Lógica JWT
-  - `backend/app/core/deps.py` - Dependência AuthUser
-  - `backend/app/main.py` - App FastAPI
-- **O que falta:**
-  - ✗ Middleware global que valida token em toda request
-  - ✗ Refresh token automático
-  - ✗ Logout (token blacklist)
+  - ✗ Token expiration validation consistente
+  - ✗ Logout com token blacklist (Redis)
   - ✗ CORS específico por ambiente
   - ✗ Rate limiting por usuário
-- **Prioridade:** 🔴 ALTA
+  - ✗ Refresh token automático no frontend (já existe)
+  - ✗ Testes de auth em endpoints
+- **Arquivos já prontos para uso:**
+  - ✅ TenantContextMiddleware (já injetado)
+  - ✅ AuthUser dependency
+  - ✅ JWT encode/decode
+  - ✅ Refresh token flow
+- **Prioridade:** 🔴 ALTA (RECOMENDADO PARA AMANHÃ)
 
 ---
 
-### 5. **Webhooks Open Finance**
-- **Status:** ⚠️ Estrutura existe, processamento não validado
-- **Impacto:** Médio
-- **Descrição:** Endpoint de webhook existe mas não foi testado de ponta a ponta
+### 1. **Testes de Integração dos Endpoints**
+- **Status:** ⏳ BLOQUEADO (aguarda Gap #4)
+- **Impacto:** Alto
+- **Descrição:** Todos os endpoints precisam de testes de integração completos
 - **Arquivos envolvidos:**
-  - `backend/app/api/v1/webhooks.py` - Endpoint webhook
-  - `backend/app/workers/tasks.py` - Tasks Celery
-  - `backend/app/services/pluggy_service.py` - Lógica Pluggy
+  - `backend/tests/conftest.py` - Fixtures (parcial)
+  - `backend/tests/test_*.py` - Testes por endpoint
+  - `backend/tests/test_rls_isolation.py` - ✅ Testes RLS já existem
 - **O que falta:**
-  - ✗ Validação de assinatura do webhook
-  - ✗ Testes de processamento assíncrono
-  - ✗ Retry logic para falhas
+  - ✗ Fixtures para AsyncClient
+  - ✗ Database de teste isolado
+  - ✗ User/tenant factories
+  - ✗ JWT token mocks
+  - ✗ Testes de todos endpoints (POST, GET, PATCH, DELETE)
+  - ✗ Testes de validação de planos
+  - ✗ Edge cases e error handling
+- **Prioridade:** 🔴 ALTA (DEPOIS DE #4)
+
+---
+
+### 7. **Integração Stripe (Billing)**
+- **Status:** ⏳ AGUARDANDO
+- **Impacto:** Alto (para monetização)
+- **Descrição:** Checkout, webhooks e atualização de planos
+- **Arquivos envolvidos:**
+  - `backend/app/services/stripe_service.py` - ✅ Service existe
+  - `backend/app/api/v1/billing.py` - Endpoints (vazio)
+  - `backend/app/models/tenant.py` - ✅ Stripe IDs já existem
+- **O que falta:**
+  - ✗ Endpoint POST /api/v1/billing/checkout (criar session)
+  - ✗ Endpoint POST /api/v1/billing/webhook (receber eventos)
+  - ✗ Lógica de atualização de plano após pagamento
+  - ✗ Sincronização de status com tenants
+  - ✗ Testes de pagamento (mock Stripe)
+  - ✗ Email de confirmação
+  - ✗ Portal de gerenciamento do cliente
+- **Prioridade:** 🔴 ALTA (NECESSÁRIO PARA PRODUÇÃO)
+
+---
+
+## 🟡 Gaps de Média Prioridade
+
+### 5. **Webhooks Open Finance**
+- **Status:** ⚠️ Estrutura pronta, não testada
+- **Impacto:** Médio (sincronização em tempo real)
+- **Descrição:** Processar eventos de contas abertas/fechadas do Open Finance
+- **Arquivos envolvidos:**
+  - `backend/app/api/v1/webhooks.py` - ✅ Endpoint existe
+  - `backend/app/workers/tasks.py` - ✅ Tasks existem
+  - `backend/app/services/pluggy_service.py` - ✅ Integração existe
+- **O que falta:**
+  - ✗ Validação de assinatura Pluggy
+  - ✗ Retry automático em falhas
   - ✗ Logging estruturado
-  - ✗ Teste com Pluggy mock
+  - ✗ Testes end-to-end com Pluggy mock
+  - ✗ Monitoramento de processamento
 - **Prioridade:** 🟡 MÉDIA
 
 ---
 
 ### 6. **Job de Sincronização Periódica (Celery Beat)**
 - **Status:** ❌ Não implementado
-- **Impacto:** Médio
-- **Descrição:** Celery Beat configurado mas não há tasks agendadas
+- **Impacto:** Médio (dados atualizados)
+- **Descrição:** Sincronizar contas/transações periodicamente (mesmo sem webhooks)
 - **Arquivos envolvidos:**
-  - `backend/app/workers/celery_app.py` - Config Celery
-  - `backend/app/workers/tasks.py` - Tasks
-  - `docker-compose.yml` - Serviço Beat
+  - `backend/app/workers/celery_app.py` - ✅ Celery configurado
+  - `backend/app/workers/tasks.py` - ✅ Tasks estruturadas
+  - `docker-compose.yml` - ✅ Serviço beat existe
 - **O que falta:**
-  - ✗ Tasks de sync Open Finance por tenant
-  - ✗ Schedule configuration
-  - ✗ Retry policies
-  - ✗ Monitoramento de falhas
-  - ✗ Testes de agendamento
+  - ✗ Agendamento de tasks (a cada 1h, 6h, diariamente)
+  - ✗ Tenants priorities
+  - ✗ Error handling e retry
+  - ✗ Logging de execução
+  - ✗ Monitoramento de status
+  - ✗ Tests de agendamento
 - **Prioridade:** 🟡 MÉDIA
-
----
-
-### 7. **Integração Stripe (Billing)**
-- **Status:** ⚠️ Service criado, endpoints faltam
-- **Impacto:** Alto
-- **Descrição:** Logic Stripe existe mas endpoints de checkout não implementados
-- **Arquivos envolvidos:**
-  - `backend/app/services/stripe_service.py` - Service
-  - `backend/app/api/v1/billing.py` - Endpoint
-- **O que falta:**
-  - ✗ Endpoint de checkout
-  - ✗ Webhook Stripe processing
-  - ✗ Update de plan status
-  - ✗ Integração com sistema de planos
-  - ✗ Tests de billing
-- **Prioridade:** 🔴 ALTA
 
 ---
 
 ### 8. **CI/CD Pipeline**
-- **Status:** ❌ Completamente ausente
-- **Impacto:** Médio
-- **Descrição:** Nenhuma automação de build/test/deploy
+- **Status:** ❌ Não existe
+- **Impacto:** Médio (automação)
+- **Descrição:** Executar testes, build, deploy automaticamente
 - **Arquivos envolvidos:**
-  - `.github/workflows/` - Não existe
+  - `.github/workflows/` - NÃO EXISTE
 - **O que falta:**
-  - ✗ GitHub Actions workflow
-  - ✗ Lint (ruff) automático
-  - ✗ Tests automáticos (pytest)
-  - ✗ Build Docker image
-  - ✗ Deploy automático
-- **Prioridade:** 🟡 MÉDIA
+  - ✗ Workflow: lint (ruff + black)
+  - ✗ Workflow: tests (pytest com coverage)
+  - ✗ Workflow: build Docker
+  - ✗ Workflow: push para registry
+  - ✗ Workflow: deploy em staging
+  - ✗ Status badges no README
+- **Prioridade:** 🟡 MÉDIA (importante para produção)
 
 ---
 
 ### 9. **Infrastructure as Code (IaC)**
-- **Status:** ❌ Completamente ausente
-- **Impacto:** Médio
-- **Descrição:** Nenhuma automação de infraestrutura
+- **Status:** ❌ Não existe
+- **Impacto:** Médio (deploy em produção)
+- **Descrição:** Terraform para provisionar infra (DB, Redis, App)
 - **Arquivos envolvidos:**
-  - `terraform/` - Não existe
-  - `.env.example` - Não existe
+  - `terraform/` - NÃO EXISTE
+  - `docs/DEPLOY.md` - Documentação de deployment
 - **O que falta:**
-  - ✗ Terraform code (PostgreSQL, Redis, App Services)
-  - ✗ Environment variables documentation
-  - ✗ Networking config
-  - ✗ SSL/TLS setup
-  - ✗ Backups automáticos
+  - ✗ Terraform modules (networking, database, app)
+  - ✗ Variáveis de ambiente por stage
+  - ✗ Auto-scaling configs
+  - ✗ Backup policies
+  - ✗ Monitoring setup
+  - ✗ Documentação de deploy
 - **Prioridade:** 🟡 MÉDIA
 
 ---
 
-### 10. **Frontend - Páginas Funcionais**
-- **Status:** ✅ IMPLEMENTADO
-- **Impacto:** Alto
-- **Descrição:** Todas as páginas do dashboard estão funcionais com visualizações e integração com API
+### 11. **Plan Guard - Validação de Planos**
+- **Status:** ⚠️ Arquivo criado, não integrado
+- **Impacto:** Médio (necessário para billing)
+- **Descrição:** Validar limites de recursos por plano em endpoints
 - **Arquivos envolvidos:**
-  - `frontend/src/app/(dashboard)/dashboard/page.tsx` - ✅ Dashboard principal com gráficos
-  - `frontend/src/app/(dashboard)/accounts/page.tsx` - ✅ Gerenciamento de contas
-  - `frontend/src/app/(dashboard)/categories/page.tsx` - ✅ Gerenciamento de categorias
-  - `frontend/src/app/(dashboard)/recurring/page.tsx` - ✅ Despesas recorrentes
-  - `frontend/src/app/(dashboard)/cash-flow/page.tsx` - ✅ Fluxo de caixa com gráficos
-  - `frontend/src/app/(dashboard)/invoices/page.tsx` - ✅ Gerenciamento de faturas
-  - `frontend/src/app/(dashboard)/projection/page.tsx` - ✅ Projeção de saldo
-  - `frontend/src/app/(dashboard)/net-worth/page.tsx` - ✅ Patrimônio líquido
-  - `frontend/src/app/(dashboard)/reports/page.tsx` - ✅ Relatórios com gráficos
-  - `frontend/src/app/(dashboard)/goals/page.tsx` - ✅ Metas financeiras
-  - `frontend/src/app/(dashboard)/plans/page.tsx` - ✅ Planos e assinatura
-  - `frontend/src/components/layout/sidebar.tsx` - ✅ Navegação habilitada
-- **O que foi implementado:**
-  - ✅ 11 páginas do dashboard totalmente funcionais
-  - ✅ Integração com React Query hooks
-  - ✅ Visualizações Recharts (AreaChart, BarChart, LineChart, PieChart)
-  - ✅ Forms com React Hook Form + Zod
-  - ✅ Modais para CRUD operations
-  - ✅ Estados de loading com Skeleton
-  - ✅ Design responsivo (mobile-first)
-  - ✅ Sidebar navigation com icones
-  - ✅ Formatação de moeda e datas
-- **Prioridade:** 🔴 ALTA → ✅ COMPLETO
-
----
-
-### 11. **Validação de Planos (Plan Guard)**
-- **Status:** ⚠️ Arquivo criado, lógica não aplicada
-- **Impacto:** Médio
-- **Descrição:** plan_guard.py e plan_limits.py existem mas não estão sendo usados
-- **Arquivos envolvidos:**
-  - `backend/app/core/plan_guard.py` - Validator
-  - `backend/app/core/plan_limits.py` - Limites
-  - Endpoints da API - Não validam plano
+  - `backend/app/core/plan_guard.py` - ✅ Validator existe
+  - `backend/app/core/plan_limits.py` - ✅ Limites definidos
+  - Endpoints - SEM VALIDAÇÃO
 - **O que falta:**
-  - ✗ Decorator de verificação de plano
-  - ✗ Aplicação em endpoints
-  - ✗ Testes de limite de conexões
-  - ✗ Testes de recursos premium
+  - ✗ Decorator @check_plan_limit("resource", "limit_key")
+  - ✗ Aplicação em endpoints críticos (accounts, connections)
+  - ✗ Mensagens de erro claras (upgrade needed)
+  - ✗ Testes de limite por plano
+  - ✗ Dashboard de uso/limites para usuário
 - **Prioridade:** 🟡 MÉDIA
 
 ---
 
-### 12. **Conftest e Setup de Testes**
+### 12. **Conftest e Setup Completo de Testes**
 - **Status:** ⚠️ Arquivo vazio
-- **Impacto:** Médio
-- **Descrição:** conftest.py existe mas sem implementação
+- **Impacto:** Médio (facilita testes)
+- **Descrição:** Fixtures reutilizáveis para toda suíte de testes
 - **Arquivos envolvidos:**
-  - `backend/tests/conftest.py` - Fixtures
+  - `backend/tests/conftest.py` - VAZIO
 - **O que falta:**
-  - ✗ Database de teste fixture
-  - ✗ AsyncClient fixture
-  - ✗ User/tenant fixtures
-  - ✗ JWT token fixtures
-  - ✗ Mock de Pluggy
+  - ✗ @pytest.fixture async def db_session
+  - ✗ @pytest.fixture async def client (AsyncClient)
+  - ✗ @pytest.fixture async def user_factory
+  - ✗ @pytest.fixture async def tenant_factory
+  - ✗ @pytest.fixture def valid_jwt_token
+  - ✗ Setup/teardown de DB de teste
+  - ✗ Mocks para Pluggy, Stripe
 - **Prioridade:** 🟡 MÉDIA
 
 ---
 
-## 📊 Resumo por Prioridade
+## 📊 Resumo Executivo
 
-### 🔴 ALTA (5 itens)
-1. Testes de Integração dos Endpoints
-4. Middleware de Autenticação
-7. Integração Stripe (Billing)
+### Status Geral: 3/12 gaps completados (25%)
 
-### ✅ COMPLETO (3 itens)
-2. Frontend Desconectado da API
-3. Segurança Multi-tenant (RLS)
-10. Frontend - Páginas Funcionais
+```
+✅ COMPLETO (3):  Gap #2, #3, #10
+🔴 ALTA (3):     Gap #1, #4, #7  
+🟡 MÉDIA (5):    Gap #5, #6, #8, #9, #11, #12
+⏳ BLOQUEADO:    Gap #1 (aguarda #4)
+```
 
-### 🟡 MÉDIA (5 itens)
-5. Webhooks Open Finance
-6. Job de Sincronização Periódica
-8. CI/CD Pipeline
-9. Infrastructure as Code
-11. Validação de Planos
+### Avanços Realizados (16 de mar 2026)
 
----
-
-## 🎯 Próximos Passos Recomendados
-
-1. **Fase 1 - Segurança & Autenticação** (Semana 1)
-   - Setup `conftest.py` com fixtures
-   - Middleware de autenticação + RLS
-   - Testes de integração básicos
-
-2. **Fase 2 - API & Frontend** (Semana 2-3)
-   - Executar testes dos endpoints
-   - Conectar frontend à API
-   - Implementar páginas principais
-
-3. **Fase 3 - Features** (Semana 4)
-   - Webhooks de Open Finance
-   - Stripe integration
-   - Celery Beat jobs
-
-4. **Fase 4 - DevOps** (Semana 5)
-   - CI/CD pipeline
-   - IaC (Terraform)
-   - Monitoramento
+| Gap | Título | Status |
+|-----|--------|--------|
+| 2 | Frontend API Integration | ✅ COMPLETO |
+| 3 | Multi-tenant RLS Security | ✅ COMPLETO |
+| 10 | Frontend Pages (11 páginas) | ✅ COMPLETO |
+| - | README profissional | ✅ COMPLETO |
+| - | Rename: Visor → FinControl | ✅ COMPLETO |
 
 ---
 
-## 📝 Template para Revisão
+## 🎯 Plano Recomendado
 
-Antes de iniciar trabalho em qualquer gap:
+### FASE 1 - Segurança (Hoje + Amanhã)
+1. ✅ Gap #3 - RLS Security - CONCLUÍDO
+2. 🔴 Gap #4 - Auth Middleware - **COMEÇAR AMANHÃ**
+3. 🔴 Gap #1 - Integration Tests (após #4)
+
+### FASE 2 - Monetização (Próxima semana)
+4. 🔴 Gap #7 - Stripe Billing
+5. 🟡 Gap #11 - Plan Guard
+
+### FASE 3 - Automação (Próxima semana)
+6. 🟡 Gap #6 - Celery Beat Jobs
+7. 🟡 Gap #5 - Open Finance Webhooks
+8. 🟡 Gap #8 - CI/CD Pipeline
+
+### FASE 4 - Infraestrutura (Futuro)
+9. 🟡 Gap #9 - Terraform IaC
+
+---
+
+## ✨ Destaques da Semana
+
+### Implementado (16 de mar):
+- ✅ **11 Dashboard Pages** com Recharts visualizações
+- ✅ **RLS Multi-tenant** com PostgreSQL + Middleware
+- ✅ **React Query Hooks** para toda API (11 hooks personalizados)
+- ✅ **JWT + Refresh Token** flow completo
+- ✅ **README Profissional** (400+ linhas)
+- ✅ **App Rename** Visor → FinControl
+
+### Commits da Semana:
+1. `4408a95` - Gap #2: Frontend API Integration
+2. `8de4927` - Gap #10: Dashboard Pages (11 páginas)
+3. `3a5375f` - Gap #3: Multi-tenant RLS Security
+4. `35c9bc0` - README profissional
+5. `6c69b16` - Rename Visor → FinControl
+
+---
+
+## 📝 Como Contribuir Amanhã
+
+### Gap #4 - Middleware de Autenticação (PRÓXIMO)
+
+```bash
+# 1. Criar branch
+git checkout -b gap/4-auth-middleware
+
+# 2. Implementar:
+# - Token expiration validation
+# - Logout endpoint com Redis blacklist
+# - Rate limiting decorator
+# - CORS configurável
+
+# 3. Testar
+pytest backend/tests/test_auth_middleware.py -v
+
+# 4. Commit
+git commit -m "feat: Auth Middleware (Gap #4)"
+
+# 5. Atualizar pendencias.md
+```
+
+### Checklist Pre-Implementation
+
 - [ ] Ler este arquivo
-- [ ] Revisar os arquivos envolvidos
-- [ ] Criar branch feature: `git checkout -b gap/<nome>`
-- [ ] Implementar e testar
-- [ ] Atualizar este arquivo (marcar como ✅)
-- [ ] Pull request para revisão
+- [ ] Verificar `backend/app/core/security.py`
+- [ ] Entender TenantContextMiddleware pattern
+- [ ] Revisar tests em `backend/tests/test_auth.py`
+- [ ] Criar fixtures em conftest.py se necessário
+
+---
+
+**Próxima atualização:** Após completar Gap #4  
+**Estimativa:** 17 de março de 2026
 
 ---
 

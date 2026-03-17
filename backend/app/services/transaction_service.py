@@ -111,12 +111,8 @@ async def get_monthly_summary(
         date_to = datetime(year, month + 1, 1)
 
     q = select(
-        func.sum(
-            Transaction.amount.filter(Transaction.amount > 0)  # type: ignore[attr-defined]
-        ).label("receita"),
-        func.sum(
-            Transaction.amount.filter(Transaction.amount < 0)  # type: ignore[attr-defined]
-        ).label("gasto"),
+        func.sum(Transaction.amount).filter(Transaction.amount > 0).label("receita"),
+        func.sum(Transaction.amount).filter(Transaction.amount < 0).label("gasto"),
     ).where(
         Transaction.tenant_id == tenant_id,
         Transaction.date >= date_from,

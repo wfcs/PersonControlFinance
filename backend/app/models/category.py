@@ -24,5 +24,5 @@ class Category(Base, TenantMixin, TimestampMixin):
 
     tenant: Mapped["Tenant"] = relationship(back_populates="categories")
     transactions: Mapped[list["Transaction"]] = relationship(back_populates="category")
-    children: Mapped[list["Category"]] = relationship(back_populates="parent")
-    parent: Mapped["Category | None"] = relationship(back_populates="children", remote_side="Category.id")
+    children: Mapped[list["Category"]] = relationship(back_populates="parent", lazy="selectin")
+    parent: Mapped["Category | None"] = relationship(back_populates="children", remote_side="Category.id", lazy="selectin")

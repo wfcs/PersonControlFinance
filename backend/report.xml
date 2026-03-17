@@ -1,210 +1,17 @@
-============================= test session starts =============================
-platform win32 -- Python 3.14.3, pytest-9.0.2, pluggy-1.6.0
-rootdir: C:\Users\felipedovinhoo\OneDrive\01_Projetos\02_apps\02_app_fin\backend
-configfile: pyproject.toml
-plugins: anyio-4.12.1, asyncio-1.3.0
-asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
-collected 49 items
-
-tests\test_accounts.py ......                                            [ 12%]
-tests\test_auth.py ....                                                  [ 20%]
-tests\test_bills.py ....                                                 [ 28%]
-tests\test_categories.py FFFFF                                           [ 38%]
-tests\test_dashboard.py FFF                                              [ 44%]
-tests\test_open_finance.py ....                                          [ 53%]
-tests\test_recurrences.py ....                                           [ 61%]
-tests\test_rls_isolation.py EE.EE                                        [ 71%]
-tests\test_tasks.py F                                                    [ 73%]
-tests\test_transactions.py .......F.                                     [ 91%]
-tests\test_webhooks.py ....                                              [100%]
-
-=================================== ERRORS ====================================
-___________ ERROR at setup of test_rls_prevents_cross_tenant_select ___________
-file C:\Users\felipedovinhoo\OneDrive\01_Projetos\02_apps\02_app_fin\backend\tests\test_rls_isolation.py, line 57
-  @pytest.mark.asyncio
-  async def test_rls_prevents_cross_tenant_select(
-      db_session: AsyncSession, tenant1, tenant2, user1, user2
-  ):
-      """
-      Testa se RLS impede leitura de dados de outro tenant.
-      """
-      # Adicionar tenants e usu·rios ao banco
-      db_session.add(tenant1)
-      db_session.add(tenant2)
-      db_session.add(user1)
-      db_session.add(user2)
-      await db_session.commit()
-
-      # Criar categorias para cada tenant
-      cat1 = Category(
-          id=uuid4(),
-          name="Supermercado",
-          color="#FF0000",
-          tenant_id=tenant1.id,
-      )
-      cat2 = Category(
-          id=uuid4(),
-          name="Gasolina",
-          color="#00FF00",
-          tenant_id=tenant2.id,
-      )
-
-      db_session.add(cat1)
-      db_session.add(cat2)
-      await db_session.commit()
-
-      # Aplicar contexto do user1 (tenant 1)
-      await apply_tenant_context(db_session, tenant1.id, user1.id)
-
-      # Executar query - deve retornar apenas 1 categoria
-      from sqlalchemy import select
-
-      result = await db_session.execute(select(Category))
-      categories = result.scalars().all()
-
-      assert len(categories) == 1
-      assert categories[0].id == cat1.id
-      assert categories[0].tenant_id == tenant1.id
-
-      # Limpar
-      await clear_tenant_context(db_session)
-E       fixture 'db_session' not found
->       available fixtures: _class_scoped_runner, _function_scoped_runner, _module_scoped_runner, _package_scoped_runner, _session_scoped_runner, anyio_backend, anyio_backend_name, anyio_backend_options, auth_client, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, client, doctest_namespace, event_loop_policy, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_account, setup_db, subtests, tenant1, tenant2, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory, user1, user2
->       use 'pytest --fixtures [testpath]' for help on them.
-
-C:\Users\felipedovinhoo\OneDrive\01_Projetos\02_apps\02_app_fin\backend\tests\test_rls_isolation.py:57
-___________ ERROR at setup of test_rls_prevents_cross_tenant_insert ___________
-file C:\Users\felipedovinhoo\OneDrive\01_Projetos\02_apps\02_app_fin\backend\tests\test_rls_isolation.py, line 106
-  @pytest.mark.asyncio
-  async def test_rls_prevents_cross_tenant_insert(
-      db_session: AsyncSession, tenant1, tenant2, user1
-  ):
-      """
-      Testa se RLS impede inserÁ„o de dados com tenant_id diferente.
-      """
-      # Adicionar tenants
-      db_session.add(tenant1)
-      db_session.add(tenant2)
-      await db_session.commit()
-
-      # Aplicar contexto do user1 (tenant 1)
-      await apply_tenant_context(db_session, tenant1.id, user1.id)
-
-      # Tentar inserir categoria com tenant_id != user1.tenant_id
-      # Isso deveria ser bloqueado pelo RLS
-      cat = Category(
-          id=uuid4(),
-          name="Maledicta",
-          color="#FF0000",
-          tenant_id=tenant2.id,  # tenant diferente!
-      )
-
-      db_session.add(cat)
-
-      # RLS deveria bloquear com uma exception
-      with pytest.raises(Exception):  # ProgrammingError ou similar
-          await db_session.commit()
-
-      await clear_tenant_context(db_session)
-E       fixture 'db_session' not found
->       available fixtures: _class_scoped_runner, _function_scoped_runner, _module_scoped_runner, _package_scoped_runner, _session_scoped_runner, anyio_backend, anyio_backend_name, anyio_backend_options, auth_client, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, client, doctest_namespace, event_loop_policy, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_account, setup_db, subtests, tenant1, tenant2, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory, user1, user2
->       use 'pytest --fixtures [testpath]' for help on them.
-
-C:\Users\felipedovinhoo\OneDrive\01_Projetos\02_apps\02_app_fin\backend\tests\test_rls_isolation.py:106
-__________ ERROR at setup of test_tenant_isolation_account_creation ___________
-file C:\Users\felipedovinhoo\OneDrive\01_Projetos\02_apps\02_app_fin\backend\tests\test_rls_isolation.py, line 163
-  @pytest.mark.asyncio
-  async def test_tenant_isolation_account_creation(
-      db_session: AsyncSession, tenant1, tenant2, user1, user2
-  ):
-      """
-      Testa se contas criadas por user1 sÛ s„o visÌveis para tenant1.
-      """
-      # Setup
-      db_session.add(tenant1)
-      db_session.add(tenant2)
-      db_session.add(user1)
-      db_session.add(user2)
-      await db_session.commit()
-
-      # User1 cria uma conta
-      await apply_tenant_context(db_session, tenant1.id, user1.id)
-
-      account1 = Account(
-          id=uuid4(),
-          name="Conta Banc·ria",
-          institution_name="Banco XYZ",
-          type="checking",
-          tenant_id=tenant1.id,
-          balance=1000,
-      )
-      db_session.add(account1)
-      await db_session.commit()
-
-      # Checar que user1 vÍ a conta
-      from sqlalchemy import select
-
-      result = await db_session.execute(select(Account))
-      accounts = result.scalars().all()
-      assert len(accounts) == 1
-
-      await clear_tenant_context(db_session)
-
-      # User2 n„o deveria ver conta de user1
-      await apply_tenant_context(db_session, tenant2.id, user2.id)
-
-      result = await db_session.execute(select(Account))
-      accounts = result.scalars().all()
-      # RLS deveria retornar lista vazia
-      assert len(accounts) == 0
-
-      await clear_tenant_context(db_session)
-E       fixture 'db_session' not found
->       available fixtures: _class_scoped_runner, _function_scoped_runner, _module_scoped_runner, _package_scoped_runner, _session_scoped_runner, anyio_backend, anyio_backend_name, anyio_backend_options, auth_client, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, client, doctest_namespace, event_loop_policy, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_account, setup_db, subtests, tenant1, tenant2, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory, user1, user2
->       use 'pytest --fixtures [testpath]' for help on them.
-
-C:\Users\felipedovinhoo\OneDrive\01_Projetos\02_apps\02_app_fin\backend\tests\test_rls_isolation.py:163
-_____________ ERROR at setup of test_missing_tenant_context_fails _____________
-file C:\Users\felipedovinhoo\OneDrive\01_Projetos\02_apps\02_app_fin\backend\tests\test_rls_isolation.py, line 211
-  @pytest.mark.asyncio
-  async def test_missing_tenant_context_fails(
-      db_session: AsyncSession, tenant1
-  ):
-      """
-      Testa se operaÁıes sem tenant context falham.
-      """
-      db_session.add(tenant1)
-      await db_session.commit()
-
-      # Tentar query sem context
-      from sqlalchemy import select
-
-      result = await db_session.execute(select(Category))
-      # Sem tenant context setado, RLS deveria retornar vazio ou erro
-      categories = result.scalars().all()
-      assert len(categories) == 0
-E       fixture 'db_session' not found
->       available fixtures: _class_scoped_runner, _function_scoped_runner, _module_scoped_runner, _package_scoped_runner, _session_scoped_runner, anyio_backend, anyio_backend_name, anyio_backend_options, auth_client, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, client, doctest_namespace, event_loop_policy, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_account, setup_db, subtests, tenant1, tenant2, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory, user1, user2
->       use 'pytest --fixtures [testpath]' for help on them.
-
-C:\Users\felipedovinhoo\OneDrive\01_Projetos\02_apps\02_app_fin\backend\tests\test_rls_isolation.py:211
-================================== FAILURES ===================================
-____________________________ test_create_category _____________________________
-
-auth_client = {'client': <httpx.AsyncClient object at 0x0000021029FB8350>, 'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOi...HAiOjE3NzM3MTM5NTUsInR5cGUiOiJhY2Nlc3MiLCJlbWFpbCI6ImRldkB2aXNvci5hcHAifQ.Dpqrk96M9D93ULKoJPENczW79a1gO-3cw6867gWmAmQ'}
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="4" failures="10" skipped="0" tests="49" time="13.016" timestamp="2026-03-16T22:20:08.144802-03:00" hostname="DESKTOP-H8KGF4P"><testcase classname="tests.test_accounts" name="test_create_account" time="0.260" /><testcase classname="tests.test_accounts" name="test_list_accounts" time="0.218" /><testcase classname="tests.test_accounts" name="test_get_account" time="0.209" /><testcase classname="tests.test_accounts" name="test_update_account" time="0.228" /><testcase classname="tests.test_accounts" name="test_delete_account" time="0.218" /><testcase classname="tests.test_accounts" name="test_account_isolation" time="0.763" /><testcase classname="tests.test_auth" name="test_register" time="0.214" /><testcase classname="tests.test_auth" name="test_login" time="0.387" /><testcase classname="tests.test_auth" name="test_login_wrong_password" time="0.394" /><testcase classname="tests.test_auth" name="test_me" time="0.215" /><testcase classname="tests.test_bills" name="test_get_bills_empty" time="0.218" /><testcase classname="tests.test_bills" name="test_get_bills_with_transactions" time="0.236" /><testcase classname="tests.test_bills" name="test_get_bills_not_credit_card" time="0.215" /><testcase classname="tests.test_bills" name="test_get_bills_custom_closing_day" time="0.222" /><testcase classname="tests.test_categories" name="test_create_category" time="0.213"><failure message="pydantic_core._pydantic_core.ValidationError: 1 validation error for CategoryOut&#10;children&#10;  Error extracting attribute: MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s) [type=get_attribute_error, input_value=&lt;app.models.category.Cate...t at 0x00000193E4AE3E00&gt;, input_type=Category]&#10;    For further information visit https://errors.pydantic.dev/2.12/v/get_attribute_error">auth_client = {'client': &lt;httpx.AsyncClient object at 0x00000193E5D14110&gt;, 'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOi...HAiOjE3NzM3MTQwMTIsInR5cGUiOiJhY2Nlc3MiLCJlbWFpbCI6ImRldkB2aXNvci5hcHAifQ.EvofrKyAcMWEoVSvQISMuNvd0wq9bEVG8ZU7AQ81ONY'}
 
     @pytest.mark.asyncio
     async def test_create_category(auth_client: dict):
         client: AsyncClient = auth_client["client"]
->       res = await client.post("/api/v1/categories/", json={
-            "name": "AlimentaÁ„o",
-            "icon": "\U0001f354",
+&gt;       res = await client.post("/api/v1/categories/", json={
+            "name": "Alimenta√ß√£o",
+            "icon": "#x1F354",
             "color": "#FF6B6B",
             "monthly_limit": "800.00",
         })
 
 tests\test_categories.py:8: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 .venv\Lib\site-packages\httpx\_client.py:1859: in post
     return await self.request(
 .venv\Lib\site-packages\httpx\_client.py:1540: in request
@@ -277,38 +84,35 @@ app\core\tenant_middleware.py:72: in dispatch
 .venv\Lib\site-packages\fastapi\routing.py:324: in run_endpoint_function
     return await dependant.call(**values)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
-data = CategoryCreate(name='Alimenta\xe7\xe3o', icon='\U0001f354', color='#FF6B6B', monthly_limit=Decimal('800.00'), parent_id=None)
-current_user = <app.core.deps.CurrentUser object at 0x0000021029FC8650>
-db = <sqlalchemy.ext.asyncio.session.AsyncSession object at 0x0000021029F91CC0>
+data = CategoryCreate(name='Alimenta√ß√£o', icon='#x1F354', color='#FF6B6B', monthly_limit=Decimal('800.00'), parent_id=None)
+current_user = &lt;app.core.deps.CurrentUser object at 0x00000193E5CCFDD0&gt;
+db = &lt;sqlalchemy.ext.asyncio.session.AsyncSession object at 0x00000193E5CE1E10&gt;
 
     @router.post("/", response_model=CategoryOut, status_code=status.HTTP_201_CREATED)
     async def create_category(
         data: CategoryCreate, current_user: AuthUser, db: DBSession
-    ) -> CategoryOut:
+    ) -&gt; CategoryOut:
         cat = await category_service.create_category(data, current_user.tenant_id, db)
->       return CategoryOut.model_validate(cat)
+&gt;       return CategoryOut.model_validate(cat)
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 E       pydantic_core._pydantic_core.ValidationError: 1 validation error for CategoryOut
 E       children
-E         Error extracting attribute: MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s) [type=get_attribute_error, input_value=<app.models.category.Cate...t at 0x0000021028DFF8C0>, input_type=Category]
+E         Error extracting attribute: MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s) [type=get_attribute_error, input_value=&lt;app.models.category.Cate...t at 0x00000193E4AE3E00&gt;, input_type=Category]
 E           For further information visit https://errors.pydantic.dev/2.12/v/get_attribute_error
 
-app\api\v1\categories.py:24: ValidationError
-___________________________ test_create_subcategory ___________________________
-
-auth_client = {'client': <httpx.AsyncClient object at 0x000002102A032F90>, 'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOi...HAiOjE3NzM3MTM5NTYsInR5cGUiOiJhY2Nlc3MiLCJlbWFpbCI6ImRldkB2aXNvci5hcHAifQ.m6tjoWnA-bk9D1oZ-ZqeYgofkt5CxLGFNSyZ5kV2R2k'}
+app\api\v1\categories.py:24: ValidationError</failure></testcase><testcase classname="tests.test_categories" name="test_create_subcategory" time="0.207"><failure message="pydantic_core._pydantic_core.ValidationError: 1 validation error for CategoryOut&#10;children&#10;  Error extracting attribute: MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s) [type=get_attribute_error, input_value=&lt;app.models.category.Cate...t at 0x00000193E5CF2C10&gt;, input_type=Category]&#10;    For further information visit https://errors.pydantic.dev/2.12/v/get_attribute_error">auth_client = {'client': &lt;httpx.AsyncClient object at 0x00000193E5D8EED0&gt;, 'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOi...HAiOjE3NzM3MTQwMTIsInR5cGUiOiJhY2Nlc3MiLCJlbWFpbCI6ImRldkB2aXNvci5hcHAifQ.GongYWMuBqzOjn6tPfxiCeR_MGwE73V5vE0mmRZZAOY'}
 
     @pytest.mark.asyncio
     async def test_create_subcategory(auth_client: dict):
         client: AsyncClient = auth_client["client"]
     
->       parent = await client.post("/api/v1/categories/", json={"name": "ServiÁos"})
+&gt;       parent = await client.post("/api/v1/categories/", json={"name": "Servi√ßos"})
                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 tests\test_categories.py:24: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 .venv\Lib\site-packages\httpx\_client.py:1859: in post
     return await self.request(
 .venv\Lib\site-packages\httpx\_client.py:1540: in request
@@ -381,38 +185,35 @@ app\core\tenant_middleware.py:72: in dispatch
 .venv\Lib\site-packages\fastapi\routing.py:324: in run_endpoint_function
     return await dependant.call(**values)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
-data = CategoryCreate(name='ServiÁos', icon=None, color=None, monthly_limit=None, parent_id=None)
-current_user = <app.core.deps.CurrentUser object at 0x000002102A0AA390>
-db = <sqlalchemy.ext.asyncio.session.AsyncSession object at 0x0000021029F90E50>
+data = CategoryCreate(name='Servi√ßos', icon=None, color=None, monthly_limit=None, parent_id=None)
+current_user = &lt;app.core.deps.CurrentUser object at 0x00000193E5E05DF0&gt;
+db = &lt;sqlalchemy.ext.asyncio.session.AsyncSession object at 0x00000193E5CE0A60&gt;
 
     @router.post("/", response_model=CategoryOut, status_code=status.HTTP_201_CREATED)
     async def create_category(
         data: CategoryCreate, current_user: AuthUser, db: DBSession
-    ) -> CategoryOut:
+    ) -&gt; CategoryOut:
         cat = await category_service.create_category(data, current_user.tenant_id, db)
->       return CategoryOut.model_validate(cat)
+&gt;       return CategoryOut.model_validate(cat)
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 E       pydantic_core._pydantic_core.ValidationError: 1 validation error for CategoryOut
 E       children
-E         Error extracting attribute: MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s) [type=get_attribute_error, input_value=<app.models.category.Cate...t at 0x0000021029FB6350>, input_type=Category]
+E         Error extracting attribute: MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s) [type=get_attribute_error, input_value=&lt;app.models.category.Cate...t at 0x00000193E5CF2C10&gt;, input_type=Category]
 E           For further information visit https://errors.pydantic.dev/2.12/v/get_attribute_error
 
-app\api\v1\categories.py:24: ValidationError
-_________________________ test_list_categories_nested _________________________
-
-auth_client = {'client': <httpx.AsyncClient object at 0x000002102A033D10>, 'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOi...HAiOjE3NzM3MTM5NTYsInR5cGUiOiJhY2Nlc3MiLCJlbWFpbCI6ImRldkB2aXNvci5hcHAifQ.qB79fv0Nhf2fyuDisbiU80bfcK1PSvvbhvGPCrJjaNY'}
+app\api\v1\categories.py:24: ValidationError</failure></testcase><testcase classname="tests.test_categories" name="test_list_categories_nested" time="0.212"><failure message="pydantic_core._pydantic_core.ValidationError: 1 validation error for CategoryOut&#10;children&#10;  Error extracting attribute: MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s) [type=get_attribute_error, input_value=&lt;app.models.category.Cate...t at 0x00000193E5FCCCD0&gt;, input_type=Category]&#10;    For further information visit https://errors.pydantic.dev/2.12/v/get_attribute_error">auth_client = {'client': &lt;httpx.AsyncClient object at 0x00000193E5D8FD10&gt;, 'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOi...HAiOjE3NzM3MTQwMTMsInR5cGUiOiJhY2Nlc3MiLCJlbWFpbCI6ImRldkB2aXNvci5hcHAifQ.YahD19fjXWySGFyvWBO8vZ6lmI3-pwGj_WDfyhoq1bY'}
 
     @pytest.mark.asyncio
     async def test_list_categories_nested(auth_client: dict):
         client: AsyncClient = auth_client["client"]
     
->       parent = await client.post("/api/v1/categories/", json={"name": "ServiÁos"})
+&gt;       parent = await client.post("/api/v1/categories/", json={"name": "Servi√ßos"})
                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 tests\test_categories.py:39: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 .venv\Lib\site-packages\httpx\_client.py:1859: in post
     return await self.request(
 .venv\Lib\site-packages\httpx\_client.py:1540: in request
@@ -485,37 +286,34 @@ app\core\tenant_middleware.py:72: in dispatch
 .venv\Lib\site-packages\fastapi\routing.py:324: in run_endpoint_function
     return await dependant.call(**values)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
-data = CategoryCreate(name='ServiÁos', icon=None, color=None, monthly_limit=None, parent_id=None)
-current_user = <app.core.deps.CurrentUser object at 0x0000021029F21010>
-db = <sqlalchemy.ext.asyncio.session.AsyncSession object at 0x000002102A92AC10>
+data = CategoryCreate(name='Servi√ßos', icon=None, color=None, monthly_limit=None, parent_id=None)
+current_user = &lt;app.core.deps.CurrentUser object at 0x00000193E6691FD0&gt;
+db = &lt;sqlalchemy.ext.asyncio.session.AsyncSession object at 0x00000193E668AC80&gt;
 
     @router.post("/", response_model=CategoryOut, status_code=status.HTTP_201_CREATED)
     async def create_category(
         data: CategoryCreate, current_user: AuthUser, db: DBSession
-    ) -> CategoryOut:
+    ) -&gt; CategoryOut:
         cat = await category_service.create_category(data, current_user.tenant_id, db)
->       return CategoryOut.model_validate(cat)
+&gt;       return CategoryOut.model_validate(cat)
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 E       pydantic_core._pydantic_core.ValidationError: 1 validation error for CategoryOut
 E       children
-E         Error extracting attribute: MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s) [type=get_attribute_error, input_value=<app.models.category.Cate...t at 0x000002102A6ACE10>, input_type=Category]
+E         Error extracting attribute: MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s) [type=get_attribute_error, input_value=&lt;app.models.category.Cate...t at 0x00000193E5FCCCD0&gt;, input_type=Category]
 E           For further information visit https://errors.pydantic.dev/2.12/v/get_attribute_error
 
-app\api\v1\categories.py:24: ValidationError
-____________________________ test_update_category _____________________________
-
-auth_client = {'client': <httpx.AsyncClient object at 0x000002102A033950>, 'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOi...HAiOjE3NzM3MTM5NTcsInR5cGUiOiJhY2Nlc3MiLCJlbWFpbCI6ImRldkB2aXNvci5hcHAifQ.uNWZZivPLRc_shVrXmLTTZDaht2lcZhuetdugk24UZQ'}
+app\api\v1\categories.py:24: ValidationError</failure></testcase><testcase classname="tests.test_categories" name="test_update_category" time="0.206"><failure message="pydantic_core._pydantic_core.ValidationError: 1 validation error for CategoryOut&#10;children&#10;  Error extracting attribute: MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s) [type=get_attribute_error, input_value=&lt;app.models.category.Cate...t at 0x00000193E5BF5E00&gt;, input_type=Category]&#10;    For further information visit https://errors.pydantic.dev/2.12/v/get_attribute_error">auth_client = {'client': &lt;httpx.AsyncClient object at 0x00000193E5D8F650&gt;, 'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOi...HAiOjE3NzM3MTQwMTMsInR5cGUiOiJhY2Nlc3MiLCJlbWFpbCI6ImRldkB2aXNvci5hcHAifQ.NFTKohH3OchR4xviCt315_LGbMGr2J7rFECAmwF2zc0'}
 
     @pytest.mark.asyncio
     async def test_update_category(auth_client: dict):
         client: AsyncClient = auth_client["client"]
->       cat = await client.post("/api/v1/categories/", json={"name": "Compras"})
+&gt;       cat = await client.post("/api/v1/categories/", json={"name": "Compras"})
               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 tests\test_categories.py:56: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 .venv\Lib\site-packages\httpx\_client.py:1859: in post
     return await self.request(
 .venv\Lib\site-packages\httpx\_client.py:1540: in request
@@ -588,37 +386,34 @@ app\core\tenant_middleware.py:72: in dispatch
 .venv\Lib\site-packages\fastapi\routing.py:324: in run_endpoint_function
     return await dependant.call(**values)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 data = CategoryCreate(name='Compras', icon=None, color=None, monthly_limit=None, parent_id=None)
-current_user = <app.core.deps.CurrentUser object at 0x000002102A93B6B0>
-db = <sqlalchemy.ext.asyncio.session.AsyncSession object at 0x000002102A3486E0>
+current_user = &lt;app.core.deps.CurrentUser object at 0x00000193E6692750&gt;
+db = &lt;sqlalchemy.ext.asyncio.session.AsyncSession object at 0x00000193E609B8C0&gt;
 
     @router.post("/", response_model=CategoryOut, status_code=status.HTTP_201_CREATED)
     async def create_category(
         data: CategoryCreate, current_user: AuthUser, db: DBSession
-    ) -> CategoryOut:
+    ) -&gt; CategoryOut:
         cat = await category_service.create_category(data, current_user.tenant_id, db)
->       return CategoryOut.model_validate(cat)
+&gt;       return CategoryOut.model_validate(cat)
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 E       pydantic_core._pydantic_core.ValidationError: 1 validation error for CategoryOut
 E       children
-E         Error extracting attribute: MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s) [type=get_attribute_error, input_value=<app.models.category.Cate...t at 0x0000021029EA5940>, input_type=Category]
+E         Error extracting attribute: MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s) [type=get_attribute_error, input_value=&lt;app.models.category.Cate...t at 0x00000193E5BF5E00&gt;, input_type=Category]
 E           For further information visit https://errors.pydantic.dev/2.12/v/get_attribute_error
 
-app\api\v1\categories.py:24: ValidationError
-____________________________ test_delete_category _____________________________
-
-auth_client = {'client': <httpx.AsyncClient object at 0x000002102A0337D0>, 'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOi...HAiOjE3NzM3MTM5NTcsInR5cGUiOiJhY2Nlc3MiLCJlbWFpbCI6ImRldkB2aXNvci5hcHAifQ.jyG2JlFX58Z3NiG9c_ttlXEqRhxQ4gKXNxcmc4s6npM'}
+app\api\v1\categories.py:24: ValidationError</failure></testcase><testcase classname="tests.test_categories" name="test_delete_category" time="0.205"><failure message="pydantic_core._pydantic_core.ValidationError: 1 validation error for CategoryOut&#10;children&#10;  Error extracting attribute: MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s) [type=get_attribute_error, input_value=&lt;app.models.category.Cate...t at 0x00000193E5BF6B10&gt;, input_type=Category]&#10;    For further information visit https://errors.pydantic.dev/2.12/v/get_attribute_error">auth_client = {'client': &lt;httpx.AsyncClient object at 0x00000193E5D8F710&gt;, 'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOi...HAiOjE3NzM3MTQwMTQsInR5cGUiOiJhY2Nlc3MiLCJlbWFpbCI6ImRldkB2aXNvci5hcHAifQ._drAuNsq0tOi65Ws8eqNgAd7bgr_iAfealEQQPCGlrQ'}
 
     @pytest.mark.asyncio
     async def test_delete_category(auth_client: dict):
         client: AsyncClient = auth_client["client"]
->       cat = await client.post("/api/v1/categories/", json={"name": "Tempor·ria"})
+&gt;       cat = await client.post("/api/v1/categories/", json={"name": "Tempor√°ria"})
               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 tests\test_categories.py:70: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 .venv\Lib\site-packages\httpx\_client.py:1859: in post
     return await self.request(
 .venv\Lib\site-packages\httpx\_client.py:1540: in request
@@ -691,33 +486,30 @@ app\core\tenant_middleware.py:72: in dispatch
 .venv\Lib\site-packages\fastapi\routing.py:324: in run_endpoint_function
     return await dependant.call(**values)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
-data = CategoryCreate(name='Tempor·ria', icon=None, color=None, monthly_limit=None, parent_id=None)
-current_user = <app.core.deps.CurrentUser object at 0x0000021029F72390>
-db = <sqlalchemy.ext.asyncio.session.AsyncSession object at 0x000002102A3482F0>
+data = CategoryCreate(name='Tempor√°ria', icon=None, color=None, monthly_limit=None, parent_id=None)
+current_user = &lt;app.core.deps.CurrentUser object at 0x00000193E5C84350&gt;
+db = &lt;sqlalchemy.ext.asyncio.session.AsyncSession object at 0x00000193E60995C0&gt;
 
     @router.post("/", response_model=CategoryOut, status_code=status.HTTP_201_CREATED)
     async def create_category(
         data: CategoryCreate, current_user: AuthUser, db: DBSession
-    ) -> CategoryOut:
+    ) -&gt; CategoryOut:
         cat = await category_service.create_category(data, current_user.tenant_id, db)
->       return CategoryOut.model_validate(cat)
+&gt;       return CategoryOut.model_validate(cat)
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 E       pydantic_core._pydantic_core.ValidationError: 1 validation error for CategoryOut
 E       children
-E         Error extracting attribute: MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s) [type=get_attribute_error, input_value=<app.models.category.Cate...t at 0x0000021029EA6520>, input_type=Category]
+E         Error extracting attribute: MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s) [type=get_attribute_error, input_value=&lt;app.models.category.Cate...t at 0x00000193E5BF6B10&gt;, input_type=Category]
 E           For further information visit https://errors.pydantic.dev/2.12/v/get_attribute_error
 
-app\api\v1\categories.py:24: ValidationError
-________________________ test_dashboard_summary_empty _________________________
-
-self = Column('amount', Numeric(precision=14, scale=2), table=<transactions>, nullable=False)
+app\api\v1\categories.py:24: ValidationError</failure></testcase><testcase classname="tests.test_dashboard" name="test_dashboard_summary_empty" time="0.206"><failure message="AttributeError: Neither 'InstrumentedAttribute' object nor 'Comparator' object associated with Transaction.amount has an attribute 'filter'">self = Column('amount', Numeric(precision=14, scale=2), table=&lt;transactions&gt;, nullable=False)
 key = 'filter'
 
-    def __getattr__(self, key: str) -> Any:
+    def __getattr__(self, key: str) -&gt; Any:
         try:
->           return getattr(self.comparator, key)
+&gt;           return getattr(self.comparator, key)
                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 E           AttributeError: 'Comparator' object has no attribute 'filter'
 
@@ -725,37 +517,37 @@ E           AttributeError: 'Comparator' object has no attribute 'filter'
 
 The above exception was the direct cause of the following exception:
 
-self = <sqlalchemy.orm.attributes.InstrumentedAttribute object at 0x0000021028307560>
+self = &lt;sqlalchemy.orm.attributes.InstrumentedAttribute object at 0x00000193E4057560&gt;
 key = 'filter'
 
-    def __getattr__(self, key: str) -> Any:
+    def __getattr__(self, key: str) -&gt; Any:
         try:
             return util.MemoizedSlots.__getattr__(self, key)
         except AttributeError:
             pass
     
         try:
->           return getattr(self.comparator, key)
+&gt;           return getattr(self.comparator, key)
                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .venv\Lib\site-packages\sqlalchemy\orm\attributes.py:475: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 .venv\Lib\site-packages\sqlalchemy\util\langhelpers.py:1313: in __getattr__
     return self._fallback_getattr(key)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .venv\Lib\site-packages\sqlalchemy\orm\properties.py:474: in _fallback_getattr
     return getattr(self.__clause_element__(), key)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
-self = Column('amount', Numeric(precision=14, scale=2), table=<transactions>, nullable=False)
+self = Column('amount', Numeric(precision=14, scale=2), table=&lt;transactions&gt;, nullable=False)
 key = 'filter'
 
-    def __getattr__(self, key: str) -> Any:
+    def __getattr__(self, key: str) -&gt; Any:
         try:
             return getattr(self.comparator, key)
         except AttributeError as err:
->           raise AttributeError(
+&gt;           raise AttributeError(
                 "Neither %r object nor %r object has an attribute %r"
                 % (
                     type(self).__name__,
@@ -769,17 +561,17 @@ E           AttributeError: Neither 'AnnotatedColumn' object nor 'Comparator' ob
 
 The above exception was the direct cause of the following exception:
 
-auth_client = {'client': <httpx.AsyncClient object at 0x000002102A031550>, 'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOi...HAiOjE3NzM3MTM5NTgsInR5cGUiOiJhY2Nlc3MiLCJlbWFpbCI6ImRldkB2aXNvci5hcHAifQ.sbQ0pz1aIFIdD28rzFGK_zULTs_Rq1IrTWpaVxzUSRA'}
+auth_client = {'client': &lt;httpx.AsyncClient object at 0x00000193E5D8D490&gt;, 'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOi...HAiOjE3NzM3MTQwMTQsInR5cGUiOiJhY2Nlc3MiLCJlbWFpbCI6ImRldkB2aXNvci5hcHAifQ.Abdz1U0n3TfsUirUbHDVvDbHw9EumblYzSwyTu0RScQ'}
 
     @pytest.mark.asyncio
     async def test_dashboard_summary_empty(auth_client: dict):
         client: AsyncClient = auth_client["client"]
         now = datetime.now(timezone.utc)
->       res = await client.get(f"/api/v1/dashboard/summary?year={now.year}&month={now.month}")
+&gt;       res = await client.get(f"/api/v1/dashboard/summary?year={now.year}&amp;month={now.month}")
               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 tests\test_dashboard.py:11: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 .venv\Lib\site-packages\httpx\_client.py:1768: in get
     return await self.request(
 .venv\Lib\site-packages\httpx\_client.py:1540: in request
@@ -855,14 +647,14 @@ app\core\tenant_middleware.py:72: in dispatch
 app\api\v1\dashboard.py:24: in summary
     monthly = await transaction_service.get_monthly_summary(
 app\services\transaction_service.py:115: in get_monthly_summary
-    Transaction.amount.filter(Transaction.amount > 0)  # type: ignore[attr-defined]
+    Transaction.amount.filter(Transaction.amount &gt; 0)  # type: ignore[attr-defined]
     ^^^^^^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
-self = <sqlalchemy.orm.attributes.InstrumentedAttribute object at 0x0000021028307560>
+self = &lt;sqlalchemy.orm.attributes.InstrumentedAttribute object at 0x00000193E4057560&gt;
 key = 'filter'
 
-    def __getattr__(self, key: str) -> Any:
+    def __getattr__(self, key: str) -&gt; Any:
         try:
             return util.MemoizedSlots.__getattr__(self, key)
         except AttributeError:
@@ -871,7 +663,7 @@ key = 'filter'
         try:
             return getattr(self.comparator, key)
         except AttributeError as err:
->           raise AttributeError(
+&gt;           raise AttributeError(
                 "Neither %r object nor %r object associated with %s "
                 "has an attribute %r"
                 % (
@@ -883,15 +675,12 @@ key = 'filter'
             ) from err
 E           AttributeError: Neither 'InstrumentedAttribute' object nor 'Comparator' object associated with Transaction.amount has an attribute 'filter'
 
-.venv\Lib\site-packages\sqlalchemy\orm\attributes.py:477: AttributeError
-______________________ test_dashboard_summary_with_data _______________________
-
-self = Column('amount', Numeric(precision=14, scale=2), table=<transactions>, nullable=False)
+.venv\Lib\site-packages\sqlalchemy\orm\attributes.py:477: AttributeError</failure></testcase><testcase classname="tests.test_dashboard" name="test_dashboard_summary_with_data" time="0.215"><failure message="AttributeError: Neither 'InstrumentedAttribute' object nor 'Comparator' object associated with Transaction.amount has an attribute 'filter'">self = Column('amount', Numeric(precision=14, scale=2), table=&lt;transactions&gt;, nullable=False)
 key = 'filter'
 
-    def __getattr__(self, key: str) -> Any:
+    def __getattr__(self, key: str) -&gt; Any:
         try:
->           return getattr(self.comparator, key)
+&gt;           return getattr(self.comparator, key)
                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 E           AttributeError: 'Comparator' object has no attribute 'filter'
 
@@ -899,37 +688,37 @@ E           AttributeError: 'Comparator' object has no attribute 'filter'
 
 The above exception was the direct cause of the following exception:
 
-self = <sqlalchemy.orm.attributes.InstrumentedAttribute object at 0x0000021028307560>
+self = &lt;sqlalchemy.orm.attributes.InstrumentedAttribute object at 0x00000193E4057560&gt;
 key = 'filter'
 
-    def __getattr__(self, key: str) -> Any:
+    def __getattr__(self, key: str) -&gt; Any:
         try:
             return util.MemoizedSlots.__getattr__(self, key)
         except AttributeError:
             pass
     
         try:
->           return getattr(self.comparator, key)
+&gt;           return getattr(self.comparator, key)
                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .venv\Lib\site-packages\sqlalchemy\orm\attributes.py:475: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 .venv\Lib\site-packages\sqlalchemy\util\langhelpers.py:1313: in __getattr__
     return self._fallback_getattr(key)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .venv\Lib\site-packages\sqlalchemy\orm\properties.py:474: in _fallback_getattr
     return getattr(self.__clause_element__(), key)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
-self = Column('amount', Numeric(precision=14, scale=2), table=<transactions>, nullable=False)
+self = Column('amount', Numeric(precision=14, scale=2), table=&lt;transactions&gt;, nullable=False)
 key = 'filter'
 
-    def __getattr__(self, key: str) -> Any:
+    def __getattr__(self, key: str) -&gt; Any:
         try:
             return getattr(self.comparator, key)
         except AttributeError as err:
->           raise AttributeError(
+&gt;           raise AttributeError(
                 "Neither %r object nor %r object has an attribute %r"
                 % (
                     type(self).__name__,
@@ -943,8 +732,8 @@ E           AttributeError: Neither 'AnnotatedColumn' object nor 'Comparator' ob
 
 The above exception was the direct cause of the following exception:
 
-auth_client = {'client': <httpx.AsyncClient object at 0x000002102A032F90>, 'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOi...HAiOjE3NzM3MTM5NTksInR5cGUiOiJhY2Nlc3MiLCJlbWFpbCI6ImRldkB2aXNvci5hcHAifQ.wrkEmhaei09Q_XuhZ1cGa_WEo_h2Hw9Unw4y9Xn3Peg'}
-sample_account = {'balance': '1500.00', 'created_at': '2026-03-17T01:19:19', 'credit_limit': None, 'id': '7b9ef7cb-b900-4a00-b832-2e82f36f7f76', ...}
+auth_client = {'client': &lt;httpx.AsyncClient object at 0x00000193E5D8EED0&gt;, 'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOi...HAiOjE3NzM3MTQwMTUsInR5cGUiOiJhY2Nlc3MiLCJlbWFpbCI6ImRldkB2aXNvci5hcHAifQ.M7Q1qPFvJ6eGyVEMKZCv5dEYog4tgKrPAlntaJJwgR4'}
+sample_account = {'balance': '1500.00', 'created_at': '2026-03-17T01:20:15', 'credit_limit': None, 'id': '608a4b21-d0ea-4ef0-8fef-ab7c2d15be48', ...}
 
     @pytest.mark.asyncio
     async def test_dashboard_summary_with_data(auth_client: dict, sample_account: dict):
@@ -954,7 +743,7 @@ sample_account = {'balance': '1500.00', 'created_at': '2026-03-17T01:19:19', 'cr
         # Receita
         await client.post("/api/v1/transactions/", json={
             "account_id": sample_account["id"],
-            "description": "Sal·rio",
+            "description": "Sal√°rio",
             "amount": "6000.00",
             "type": "credit",
             "date": now.isoformat(),
@@ -968,11 +757,11 @@ sample_account = {'balance': '1500.00', 'created_at': '2026-03-17T01:19:19', 'cr
             "date": now.isoformat(),
         })
     
->       res = await client.get(f"/api/v1/dashboard/summary?year={now.year}&month={now.month}")
+&gt;       res = await client.get(f"/api/v1/dashboard/summary?year={now.year}&amp;month={now.month}")
               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 tests\test_dashboard.py:42: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 .venv\Lib\site-packages\httpx\_client.py:1768: in get
     return await self.request(
 .venv\Lib\site-packages\httpx\_client.py:1540: in request
@@ -1048,14 +837,14 @@ app\core\tenant_middleware.py:72: in dispatch
 app\api\v1\dashboard.py:24: in summary
     monthly = await transaction_service.get_monthly_summary(
 app\services\transaction_service.py:115: in get_monthly_summary
-    Transaction.amount.filter(Transaction.amount > 0)  # type: ignore[attr-defined]
+    Transaction.amount.filter(Transaction.amount &gt; 0)  # type: ignore[attr-defined]
     ^^^^^^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
-self = <sqlalchemy.orm.attributes.InstrumentedAttribute object at 0x0000021028307560>
+self = &lt;sqlalchemy.orm.attributes.InstrumentedAttribute object at 0x00000193E4057560&gt;
 key = 'filter'
 
-    def __getattr__(self, key: str) -> Any:
+    def __getattr__(self, key: str) -&gt; Any:
         try:
             return util.MemoizedSlots.__getattr__(self, key)
         except AttributeError:
@@ -1064,7 +853,7 @@ key = 'filter'
         try:
             return getattr(self.comparator, key)
         except AttributeError as err:
->           raise AttributeError(
+&gt;           raise AttributeError(
                 "Neither %r object nor %r object associated with %s "
                 "has an attribute %r"
                 % (
@@ -1076,15 +865,12 @@ key = 'filter'
             ) from err
 E           AttributeError: Neither 'InstrumentedAttribute' object nor 'Comparator' object associated with Transaction.amount has an attribute 'filter'
 
-.venv\Lib\site-packages\sqlalchemy\orm\attributes.py:477: AttributeError
-_______________________________ test_cash_flow ________________________________
-
-self = Column('amount', Numeric(precision=14, scale=2), table=<transactions>, nullable=False)
+.venv\Lib\site-packages\sqlalchemy\orm\attributes.py:477: AttributeError</failure></testcase><testcase classname="tests.test_dashboard" name="test_cash_flow" time="0.204"><failure message="AttributeError: Neither 'InstrumentedAttribute' object nor 'Comparator' object associated with Transaction.amount has an attribute 'filter'">self = Column('amount', Numeric(precision=14, scale=2), table=&lt;transactions&gt;, nullable=False)
 key = 'filter'
 
-    def __getattr__(self, key: str) -> Any:
+    def __getattr__(self, key: str) -&gt; Any:
         try:
->           return getattr(self.comparator, key)
+&gt;           return getattr(self.comparator, key)
                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 E           AttributeError: 'Comparator' object has no attribute 'filter'
 
@@ -1092,37 +878,37 @@ E           AttributeError: 'Comparator' object has no attribute 'filter'
 
 The above exception was the direct cause of the following exception:
 
-self = <sqlalchemy.orm.attributes.InstrumentedAttribute object at 0x0000021028307560>
+self = &lt;sqlalchemy.orm.attributes.InstrumentedAttribute object at 0x00000193E4057560&gt;
 key = 'filter'
 
-    def __getattr__(self, key: str) -> Any:
+    def __getattr__(self, key: str) -&gt; Any:
         try:
             return util.MemoizedSlots.__getattr__(self, key)
         except AttributeError:
             pass
     
         try:
->           return getattr(self.comparator, key)
+&gt;           return getattr(self.comparator, key)
                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .venv\Lib\site-packages\sqlalchemy\orm\attributes.py:475: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 .venv\Lib\site-packages\sqlalchemy\util\langhelpers.py:1313: in __getattr__
     return self._fallback_getattr(key)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .venv\Lib\site-packages\sqlalchemy\orm\properties.py:474: in _fallback_getattr
     return getattr(self.__clause_element__(), key)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
-self = Column('amount', Numeric(precision=14, scale=2), table=<transactions>, nullable=False)
+self = Column('amount', Numeric(precision=14, scale=2), table=&lt;transactions&gt;, nullable=False)
 key = 'filter'
 
-    def __getattr__(self, key: str) -> Any:
+    def __getattr__(self, key: str) -&gt; Any:
         try:
             return getattr(self.comparator, key)
         except AttributeError as err:
->           raise AttributeError(
+&gt;           raise AttributeError(
                 "Neither %r object nor %r object has an attribute %r"
                 % (
                     type(self).__name__,
@@ -1136,16 +922,16 @@ E           AttributeError: Neither 'AnnotatedColumn' object nor 'Comparator' ob
 
 The above exception was the direct cause of the following exception:
 
-auth_client = {'client': <httpx.AsyncClient object at 0x0000021029F32510>, 'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOi...HAiOjE3NzM3MTM5NTksInR5cGUiOiJhY2Nlc3MiLCJlbWFpbCI6ImRldkB2aXNvci5hcHAifQ.J7luZy6sDeMmN68toEKcG5EWJJskDzuuAP4u0CzINvg'}
+auth_client = {'client': &lt;httpx.AsyncClient object at 0x00000193E5C7A450&gt;, 'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOi...HAiOjE3NzM3MTQwMTUsInR5cGUiOiJhY2Nlc3MiLCJlbWFpbCI6ImRldkB2aXNvci5hcHAifQ.4-MK8Wq848pZ34fkzM6UddV-IA8SXfDHt9SmEn8lohE'}
 
     @pytest.mark.asyncio
     async def test_cash_flow(auth_client: dict):
         client: AsyncClient = auth_client["client"]
->       res = await client.get("/api/v1/dashboard/cash-flow?months=3")
+&gt;       res = await client.get("/api/v1/dashboard/cash-flow?months=3")
               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 tests\test_dashboard.py:53: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 .venv\Lib\site-packages\httpx\_client.py:1768: in get
     return await self.request(
 .venv\Lib\site-packages\httpx\_client.py:1540: in request
@@ -1222,14 +1008,14 @@ app\api\v1\dashboard.py:57: in cash_flow
     data = await transaction_service.get_monthly_summary(current_user.tenant_id, db, y, m)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 app\services\transaction_service.py:115: in get_monthly_summary
-    Transaction.amount.filter(Transaction.amount > 0)  # type: ignore[attr-defined]
+    Transaction.amount.filter(Transaction.amount &gt; 0)  # type: ignore[attr-defined]
     ^^^^^^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
-self = <sqlalchemy.orm.attributes.InstrumentedAttribute object at 0x0000021028307560>
+self = &lt;sqlalchemy.orm.attributes.InstrumentedAttribute object at 0x00000193E4057560&gt;
 key = 'filter'
 
-    def __getattr__(self, key: str) -> Any:
+    def __getattr__(self, key: str) -&gt; Any:
         try:
             return util.MemoizedSlots.__getattr__(self, key)
         except AttributeError:
@@ -1238,7 +1024,7 @@ key = 'filter'
         try:
             return getattr(self.comparator, key)
         except AttributeError as err:
->           raise AttributeError(
+&gt;           raise AttributeError(
                 "Neither %r object nor %r object associated with %s "
                 "has an attribute %r"
                 % (
@@ -1250,21 +1036,179 @@ key = 'filter'
             ) from err
 E           AttributeError: Neither 'InstrumentedAttribute' object nor 'Comparator' object associated with Transaction.amount has an attribute 'filter'
 
-.venv\Lib\site-packages\sqlalchemy\orm\attributes.py:477: AttributeError
-______________________ test_sync_all_tenants_dispatches _______________________
+.venv\Lib\site-packages\sqlalchemy\orm\attributes.py:477: AttributeError</failure></testcase><testcase classname="tests.test_open_finance" name="test_create_connect_token" time="0.213" /><testcase classname="tests.test_open_finance" name="test_create_connect_token_with_item_id" time="0.209" /><testcase classname="tests.test_open_finance" name="test_trigger_sync" time="0.218" /><testcase classname="tests.test_open_finance" name="test_disconnect_item_not_found" time="0.211" /><testcase classname="tests.test_recurrences" name="test_list_recurrences_empty" time="0.211" /><testcase classname="tests.test_recurrences" name="test_detect_installments" time="0.230" /><testcase classname="tests.test_recurrences" name="test_detect_fixed_recurring" time="0.234" /><testcase classname="tests.test_recurrences" name="test_update_recurrence" time="0.241" /><testcase classname="tests.test_rls_isolation" name="test_rls_prevents_cross_tenant_select" time="0.021"><error message="failed on setup with &quot;file C:\Users\felipedovinhoo\OneDrive\01_Projetos\02_apps\02_app_fin\backend\tests\test_rls_isolation.py, line 57&#10;  @pytest.mark.asyncio&#10;  async def test_rls_prevents_cross_tenant_select(&#10;      db_session: AsyncSession, tenant1, tenant2, user1, user2&#10;  ):&#10;      &quot;&quot;&quot;&#10;      Testa se RLS impede leitura de dados de outro tenant.&#10;      &quot;&quot;&quot;&#10;      # Adicionar tenants e usu√°rios ao banco&#10;      db_session.add(tenant1)&#10;      db_session.add(tenant2)&#10;      db_session.add(user1)&#10;      db_session.add(user2)&#10;      await db_session.commit()&#10;&#10;      # Criar categorias para cada tenant&#10;      cat1 = Category(&#10;          id=uuid4(),&#10;          name=&quot;Supermercado&quot;,&#10;          color=&quot;#FF0000&quot;,&#10;          tenant_id=tenant1.id,&#10;      )&#10;      cat2 = Category(&#10;          id=uuid4(),&#10;          name=&quot;Gasolina&quot;,&#10;          color=&quot;#00FF00&quot;,&#10;          tenant_id=tenant2.id,&#10;      )&#10;&#10;      db_session.add(cat1)&#10;      db_session.add(cat2)&#10;      await db_session.commit()&#10;&#10;      # Aplicar contexto do user1 (tenant 1)&#10;      await apply_tenant_context(db_session, tenant1.id, user1.id)&#10;&#10;      # Executar query - deve retornar apenas 1 categoria&#10;      from sqlalchemy import select&#10;&#10;      result = await db_session.execute(select(Category))&#10;      categories = result.scalars().all()&#10;&#10;      assert len(categories) == 1&#10;      assert categories[0].id == cat1.id&#10;      assert categories[0].tenant_id == tenant1.id&#10;&#10;      # Limpar&#10;      await clear_tenant_context(db_session)&#10;E       fixture 'db_session' not found&#10;&gt;       available fixtures: _class_scoped_runner, _function_scoped_runner, _module_scoped_runner, _package_scoped_runner, _session_scoped_runner, anyio_backend, anyio_backend_name, anyio_backend_options, auth_client, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, client, doctest_namespace, event_loop_policy, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_account, setup_db, subtests, tenant1, tenant2, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory, user1, user2&#10;&gt;       use 'pytest --fixtures [testpath]' for help on them.&#10;&#10;C:\Users\felipedovinhoo\OneDrive\01_Projetos\02_apps\02_app_fin\backend\tests\test_rls_isolation.py:57&quot;">file C:\Users\felipedovinhoo\OneDrive\01_Projetos\02_apps\02_app_fin\backend\tests\test_rls_isolation.py, line 57
+  @pytest.mark.asyncio
+  async def test_rls_prevents_cross_tenant_select(
+      db_session: AsyncSession, tenant1, tenant2, user1, user2
+  ):
+      """
+      Testa se RLS impede leitura de dados de outro tenant.
+      """
+      # Adicionar tenants e usu√°rios ao banco
+      db_session.add(tenant1)
+      db_session.add(tenant2)
+      db_session.add(user1)
+      db_session.add(user2)
+      await db_session.commit()
 
-    @pytest.mark.asyncio
+      # Criar categorias para cada tenant
+      cat1 = Category(
+          id=uuid4(),
+          name="Supermercado",
+          color="#FF0000",
+          tenant_id=tenant1.id,
+      )
+      cat2 = Category(
+          id=uuid4(),
+          name="Gasolina",
+          color="#00FF00",
+          tenant_id=tenant2.id,
+      )
+
+      db_session.add(cat1)
+      db_session.add(cat2)
+      await db_session.commit()
+
+      # Aplicar contexto do user1 (tenant 1)
+      await apply_tenant_context(db_session, tenant1.id, user1.id)
+
+      # Executar query - deve retornar apenas 1 categoria
+      from sqlalchemy import select
+
+      result = await db_session.execute(select(Category))
+      categories = result.scalars().all()
+
+      assert len(categories) == 1
+      assert categories[0].id == cat1.id
+      assert categories[0].tenant_id == tenant1.id
+
+      # Limpar
+      await clear_tenant_context(db_session)
+E       fixture 'db_session' not found
+&gt;       available fixtures: _class_scoped_runner, _function_scoped_runner, _module_scoped_runner, _package_scoped_runner, _session_scoped_runner, anyio_backend, anyio_backend_name, anyio_backend_options, auth_client, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, client, doctest_namespace, event_loop_policy, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_account, setup_db, subtests, tenant1, tenant2, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory, user1, user2
+&gt;       use 'pytest --fixtures [testpath]' for help on them.
+
+C:\Users\felipedovinhoo\OneDrive\01_Projetos\02_apps\02_app_fin\backend\tests\test_rls_isolation.py:57</error></testcase><testcase classname="tests.test_rls_isolation" name="test_rls_prevents_cross_tenant_insert" time="0.020"><error message="failed on setup with &quot;file C:\Users\felipedovinhoo\OneDrive\01_Projetos\02_apps\02_app_fin\backend\tests\test_rls_isolation.py, line 106&#10;  @pytest.mark.asyncio&#10;  async def test_rls_prevents_cross_tenant_insert(&#10;      db_session: AsyncSession, tenant1, tenant2, user1&#10;  ):&#10;      &quot;&quot;&quot;&#10;      Testa se RLS impede inser√ß√£o de dados com tenant_id diferente.&#10;      &quot;&quot;&quot;&#10;      # Adicionar tenants&#10;      db_session.add(tenant1)&#10;      db_session.add(tenant2)&#10;      await db_session.commit()&#10;&#10;      # Aplicar contexto do user1 (tenant 1)&#10;      await apply_tenant_context(db_session, tenant1.id, user1.id)&#10;&#10;      # Tentar inserir categoria com tenant_id != user1.tenant_id&#10;      # Isso deveria ser bloqueado pelo RLS&#10;      cat = Category(&#10;          id=uuid4(),&#10;          name=&quot;Maledicta&quot;,&#10;          color=&quot;#FF0000&quot;,&#10;          tenant_id=tenant2.id,  # tenant diferente!&#10;      )&#10;&#10;      db_session.add(cat)&#10;&#10;      # RLS deveria bloquear com uma exception&#10;      with pytest.raises(Exception):  # ProgrammingError ou similar&#10;          await db_session.commit()&#10;&#10;      await clear_tenant_context(db_session)&#10;E       fixture 'db_session' not found&#10;&gt;       available fixtures: _class_scoped_runner, _function_scoped_runner, _module_scoped_runner, _package_scoped_runner, _session_scoped_runner, anyio_backend, anyio_backend_name, anyio_backend_options, auth_client, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, client, doctest_namespace, event_loop_policy, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_account, setup_db, subtests, tenant1, tenant2, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory, user1, user2&#10;&gt;       use 'pytest --fixtures [testpath]' for help on them.&#10;&#10;C:\Users\felipedovinhoo\OneDrive\01_Projetos\02_apps\02_app_fin\backend\tests\test_rls_isolation.py:106&quot;">file C:\Users\felipedovinhoo\OneDrive\01_Projetos\02_apps\02_app_fin\backend\tests\test_rls_isolation.py, line 106
+  @pytest.mark.asyncio
+  async def test_rls_prevents_cross_tenant_insert(
+      db_session: AsyncSession, tenant1, tenant2, user1
+  ):
+      """
+      Testa se RLS impede inser√ß√£o de dados com tenant_id diferente.
+      """
+      # Adicionar tenants
+      db_session.add(tenant1)
+      db_session.add(tenant2)
+      await db_session.commit()
+
+      # Aplicar contexto do user1 (tenant 1)
+      await apply_tenant_context(db_session, tenant1.id, user1.id)
+
+      # Tentar inserir categoria com tenant_id != user1.tenant_id
+      # Isso deveria ser bloqueado pelo RLS
+      cat = Category(
+          id=uuid4(),
+          name="Maledicta",
+          color="#FF0000",
+          tenant_id=tenant2.id,  # tenant diferente!
+      )
+
+      db_session.add(cat)
+
+      # RLS deveria bloquear com uma exception
+      with pytest.raises(Exception):  # ProgrammingError ou similar
+          await db_session.commit()
+
+      await clear_tenant_context(db_session)
+E       fixture 'db_session' not found
+&gt;       available fixtures: _class_scoped_runner, _function_scoped_runner, _module_scoped_runner, _package_scoped_runner, _session_scoped_runner, anyio_backend, anyio_backend_name, anyio_backend_options, auth_client, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, client, doctest_namespace, event_loop_policy, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_account, setup_db, subtests, tenant1, tenant2, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory, user1, user2
+&gt;       use 'pytest --fixtures [testpath]' for help on them.
+
+C:\Users\felipedovinhoo\OneDrive\01_Projetos\02_apps\02_app_fin\backend\tests\test_rls_isolation.py:106</error></testcase><testcase classname="tests.test_rls_isolation" name="test_context_variables_isolation" time="0.202" /><testcase classname="tests.test_rls_isolation" name="test_tenant_isolation_account_creation" time="0.020"><error message="failed on setup with &quot;file C:\Users\felipedovinhoo\OneDrive\01_Projetos\02_apps\02_app_fin\backend\tests\test_rls_isolation.py, line 163&#10;  @pytest.mark.asyncio&#10;  async def test_tenant_isolation_account_creation(&#10;      db_session: AsyncSession, tenant1, tenant2, user1, user2&#10;  ):&#10;      &quot;&quot;&quot;&#10;      Testa se contas criadas por user1 s√≥ s√£o vis√≠veis para tenant1.&#10;      &quot;&quot;&quot;&#10;      # Setup&#10;      db_session.add(tenant1)&#10;      db_session.add(tenant2)&#10;      db_session.add(user1)&#10;      db_session.add(user2)&#10;      await db_session.commit()&#10;&#10;      # User1 cria uma conta&#10;      await apply_tenant_context(db_session, tenant1.id, user1.id)&#10;&#10;      account1 = Account(&#10;          id=uuid4(),&#10;          name=&quot;Conta Banc√°ria&quot;,&#10;          institution_name=&quot;Banco XYZ&quot;,&#10;          type=&quot;checking&quot;,&#10;          tenant_id=tenant1.id,&#10;          balance=1000,&#10;      )&#10;      db_session.add(account1)&#10;      await db_session.commit()&#10;&#10;      # Checar que user1 v√™ a conta&#10;      from sqlalchemy import select&#10;&#10;      result = await db_session.execute(select(Account))&#10;      accounts = result.scalars().all()&#10;      assert len(accounts) == 1&#10;&#10;      await clear_tenant_context(db_session)&#10;&#10;      # User2 n√£o deveria ver conta de user1&#10;      await apply_tenant_context(db_session, tenant2.id, user2.id)&#10;&#10;      result = await db_session.execute(select(Account))&#10;      accounts = result.scalars().all()&#10;      # RLS deveria retornar lista vazia&#10;      assert len(accounts) == 0&#10;&#10;      await clear_tenant_context(db_session)&#10;E       fixture 'db_session' not found&#10;&gt;       available fixtures: _class_scoped_runner, _function_scoped_runner, _module_scoped_runner, _package_scoped_runner, _session_scoped_runner, anyio_backend, anyio_backend_name, anyio_backend_options, auth_client, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, client, doctest_namespace, event_loop_policy, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_account, setup_db, subtests, tenant1, tenant2, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory, user1, user2&#10;&gt;       use 'pytest --fixtures [testpath]' for help on them.&#10;&#10;C:\Users\felipedovinhoo\OneDrive\01_Projetos\02_apps\02_app_fin\backend\tests\test_rls_isolation.py:163&quot;">file C:\Users\felipedovinhoo\OneDrive\01_Projetos\02_apps\02_app_fin\backend\tests\test_rls_isolation.py, line 163
+  @pytest.mark.asyncio
+  async def test_tenant_isolation_account_creation(
+      db_session: AsyncSession, tenant1, tenant2, user1, user2
+  ):
+      """
+      Testa se contas criadas por user1 s√≥ s√£o vis√≠veis para tenant1.
+      """
+      # Setup
+      db_session.add(tenant1)
+      db_session.add(tenant2)
+      db_session.add(user1)
+      db_session.add(user2)
+      await db_session.commit()
+
+      # User1 cria uma conta
+      await apply_tenant_context(db_session, tenant1.id, user1.id)
+
+      account1 = Account(
+          id=uuid4(),
+          name="Conta Banc√°ria",
+          institution_name="Banco XYZ",
+          type="checking",
+          tenant_id=tenant1.id,
+          balance=1000,
+      )
+      db_session.add(account1)
+      await db_session.commit()
+
+      # Checar que user1 v√™ a conta
+      from sqlalchemy import select
+
+      result = await db_session.execute(select(Account))
+      accounts = result.scalars().all()
+      assert len(accounts) == 1
+
+      await clear_tenant_context(db_session)
+
+      # User2 n√£o deveria ver conta de user1
+      await apply_tenant_context(db_session, tenant2.id, user2.id)
+
+      result = await db_session.execute(select(Account))
+      accounts = result.scalars().all()
+      # RLS deveria retornar lista vazia
+      assert len(accounts) == 0
+
+      await clear_tenant_context(db_session)
+E       fixture 'db_session' not found
+&gt;       available fixtures: _class_scoped_runner, _function_scoped_runner, _module_scoped_runner, _package_scoped_runner, _session_scoped_runner, anyio_backend, anyio_backend_name, anyio_backend_options, auth_client, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, client, doctest_namespace, event_loop_policy, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_account, setup_db, subtests, tenant1, tenant2, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory, user1, user2
+&gt;       use 'pytest --fixtures [testpath]' for help on them.
+
+C:\Users\felipedovinhoo\OneDrive\01_Projetos\02_apps\02_app_fin\backend\tests\test_rls_isolation.py:163</error></testcase><testcase classname="tests.test_rls_isolation" name="test_missing_tenant_context_fails" time="0.019"><error message="failed on setup with &quot;file C:\Users\felipedovinhoo\OneDrive\01_Projetos\02_apps\02_app_fin\backend\tests\test_rls_isolation.py, line 211&#10;  @pytest.mark.asyncio&#10;  async def test_missing_tenant_context_fails(&#10;      db_session: AsyncSession, tenant1&#10;  ):&#10;      &quot;&quot;&quot;&#10;      Testa se opera√ß√µes sem tenant context falham.&#10;      &quot;&quot;&quot;&#10;      db_session.add(tenant1)&#10;      await db_session.commit()&#10;&#10;      # Tentar query sem context&#10;      from sqlalchemy import select&#10;&#10;      result = await db_session.execute(select(Category))&#10;      # Sem tenant context setado, RLS deveria retornar vazio ou erro&#10;      categories = result.scalars().all()&#10;      assert len(categories) == 0&#10;E       fixture 'db_session' not found&#10;&gt;       available fixtures: _class_scoped_runner, _function_scoped_runner, _module_scoped_runner, _package_scoped_runner, _session_scoped_runner, anyio_backend, anyio_backend_name, anyio_backend_options, auth_client, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, client, doctest_namespace, event_loop_policy, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_account, setup_db, subtests, tenant1, tenant2, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory, user1, user2&#10;&gt;       use 'pytest --fixtures [testpath]' for help on them.&#10;&#10;C:\Users\felipedovinhoo\OneDrive\01_Projetos\02_apps\02_app_fin\backend\tests\test_rls_isolation.py:211&quot;">file C:\Users\felipedovinhoo\OneDrive\01_Projetos\02_apps\02_app_fin\backend\tests\test_rls_isolation.py, line 211
+  @pytest.mark.asyncio
+  async def test_missing_tenant_context_fails(
+      db_session: AsyncSession, tenant1
+  ):
+      """
+      Testa se opera√ß√µes sem tenant context falham.
+      """
+      db_session.add(tenant1)
+      await db_session.commit()
+
+      # Tentar query sem context
+      from sqlalchemy import select
+
+      result = await db_session.execute(select(Category))
+      # Sem tenant context setado, RLS deveria retornar vazio ou erro
+      categories = result.scalars().all()
+      assert len(categories) == 0
+E       fixture 'db_session' not found
+&gt;       available fixtures: _class_scoped_runner, _function_scoped_runner, _module_scoped_runner, _package_scoped_runner, _session_scoped_runner, anyio_backend, anyio_backend_name, anyio_backend_options, auth_client, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, client, doctest_namespace, event_loop_policy, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_account, setup_db, subtests, tenant1, tenant2, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory, user1, user2
+&gt;       use 'pytest --fixtures [testpath]' for help on them.
+
+C:\Users\felipedovinhoo\OneDrive\01_Projetos\02_apps\02_app_fin\backend\tests\test_rls_isolation.py:211</error></testcase><testcase classname="tests.test_tasks" name="test_sync_all_tenants_dispatches" time="0.023"><failure message="AttributeError: module 'app.workers' has no attribute 'tasks'">@pytest.mark.asyncio
     async def test_sync_all_tenants_dispatches():
         """sync_all_tenants deve despachar sync_tenant para cada tenant ativo."""
->       with patch("app.workers.tasks.sync_tenant") as mock_sync_tenant:
+&gt;       with patch("app.workers.tasks.sync_tenant") as mock_sync_tenant:
              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 tests\test_tasks.py:11: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 C:\Python314\Lib\unittest\mock.py:1487: in __enter__
     self.target = self.getter()
                   ^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 name = 'app.workers.tasks'
 
@@ -1305,8 +1249,8 @@ name = 'app.workers.tasks'
             # Lazy import to speedup Python startup time
             import re
             dotted_words = r'(?!\d)(\w+)(\.(?!\d)(\w+))*'
-            _NAME_PATTERN = re.compile(f'^(?P<pkg>{dotted_words})'
-                                       f'(?P<cln>:(?P<obj>{dotted_words})?)?$',
+            _NAME_PATTERN = re.compile(f'^(?P&lt;pkg&gt;{dotted_words})'
+                                       f'(?P&lt;cln&gt;:(?P&lt;obj&gt;{dotted_words})?)?$',
                                        re.UNICODE)
     
         m = _NAME_PATTERN.match(name)
@@ -1338,19 +1282,16 @@ name = 'app.workers.tasks'
         # an empty list if just the module is wanted.
         result = mod
         for p in parts:
->           result = getattr(result, p)
+&gt;           result = getattr(result, p)
                      ^^^^^^^^^^^^^^^^^^
 E           AttributeError: module 'app.workers' has no attribute 'tasks'
 
-C:\Python314\Lib\pkgutil.py:473: AttributeError
-____________________________ test_monthly_summary _____________________________
-
-self = Column('amount', Numeric(precision=14, scale=2), table=<transactions>, nullable=False)
+C:\Python314\Lib\pkgutil.py:473: AttributeError</failure></testcase><testcase classname="tests.test_transactions" name="test_create_transaction" time="0.218" /><testcase classname="tests.test_transactions" name="test_list_transactions" time="0.240" /><testcase classname="tests.test_transactions" name="test_list_transactions_filter_by_type" time="0.231" /><testcase classname="tests.test_transactions" name="test_list_transactions_search" time="0.229" /><testcase classname="tests.test_transactions" name="test_update_transaction" time="0.220" /><testcase classname="tests.test_transactions" name="test_delete_transaction" time="0.222" /><testcase classname="tests.test_transactions" name="test_export_csv" time="0.217" /><testcase classname="tests.test_transactions" name="test_monthly_summary" time="0.222"><failure message="AttributeError: Neither 'InstrumentedAttribute' object nor 'Comparator' object associated with Transaction.amount has an attribute 'filter'">self = Column('amount', Numeric(precision=14, scale=2), table=&lt;transactions&gt;, nullable=False)
 key = 'filter'
 
-    def __getattr__(self, key: str) -> Any:
+    def __getattr__(self, key: str) -&gt; Any:
         try:
->           return getattr(self.comparator, key)
+&gt;           return getattr(self.comparator, key)
                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 E           AttributeError: 'Comparator' object has no attribute 'filter'
 
@@ -1358,37 +1299,37 @@ E           AttributeError: 'Comparator' object has no attribute 'filter'
 
 The above exception was the direct cause of the following exception:
 
-self = <sqlalchemy.orm.attributes.InstrumentedAttribute object at 0x0000021028307560>
+self = &lt;sqlalchemy.orm.attributes.InstrumentedAttribute object at 0x00000193E4057560&gt;
 key = 'filter'
 
-    def __getattr__(self, key: str) -> Any:
+    def __getattr__(self, key: str) -&gt; Any:
         try:
             return util.MemoizedSlots.__getattr__(self, key)
         except AttributeError:
             pass
     
         try:
->           return getattr(self.comparator, key)
+&gt;           return getattr(self.comparator, key)
                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .venv\Lib\site-packages\sqlalchemy\orm\attributes.py:475: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 .venv\Lib\site-packages\sqlalchemy\util\langhelpers.py:1313: in __getattr__
     return self._fallback_getattr(key)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .venv\Lib\site-packages\sqlalchemy\orm\properties.py:474: in _fallback_getattr
     return getattr(self.__clause_element__(), key)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
-self = Column('amount', Numeric(precision=14, scale=2), table=<transactions>, nullable=False)
+self = Column('amount', Numeric(precision=14, scale=2), table=&lt;transactions&gt;, nullable=False)
 key = 'filter'
 
-    def __getattr__(self, key: str) -> Any:
+    def __getattr__(self, key: str) -&gt; Any:
         try:
             return getattr(self.comparator, key)
         except AttributeError as err:
->           raise AttributeError(
+&gt;           raise AttributeError(
                 "Neither %r object nor %r object has an attribute %r"
                 % (
                     type(self).__name__,
@@ -1402,8 +1343,8 @@ E           AttributeError: Neither 'AnnotatedColumn' object nor 'Comparator' ob
 
 The above exception was the direct cause of the following exception:
 
-auth_client = {'client': <httpx.AsyncClient object at 0x0000021029EA1490>, 'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOi...HAiOjE3NzM3MTM5NjQsInR5cGUiOiJhY2Nlc3MiLCJlbWFpbCI6ImRldkB2aXNvci5hcHAifQ.mlprzxVDgTDKnBb-8fQBEHsHRtH-yysp3nmxXBLLs64'}
-sample_account = {'balance': '1500.00', 'created_at': '2026-03-17T01:19:24', 'credit_limit': None, 'id': '287c40c6-f6d7-4ba4-a436-9724336ee53f', ...}
+auth_client = {'client': &lt;httpx.AsyncClient object at 0x00000193E5BE5010&gt;, 'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOi...HAiOjE3NzM3MTQwMTksInR5cGUiOiJhY2Nlc3MiLCJlbWFpbCI6ImRldkB2aXNvci5hcHAifQ.6-be_47_UkAo33cVQo-zha8eicbh89OR1jebY65Ysjk'}
+sample_account = {'balance': '1500.00', 'created_at': '2026-03-17T01:20:19', 'credit_limit': None, 'id': '155d3242-1a05-4ec8-bf00-3295a1b63b6e', ...}
 
     @pytest.mark.asyncio
     async def test_monthly_summary(auth_client: dict, sample_account: dict):
@@ -1414,18 +1355,18 @@ sample_account = {'balance': '1500.00', 'created_at': '2026-03-17T01:19:24', 'cr
         await client.post("/api/v1/transactions/", json={
             **_tx_payload(sample_account["id"], amount="5000.00"),
             "type": "credit",
-            "description": "Sal·rio",
+            "description": "Sal√°rio",
         })
         # Despesa
         await client.post("/api/v1/transactions/", json=_tx_payload(
             sample_account["id"], amount="-500.00"
         ))
     
->       res = await client.get(f"/api/v1/transactions/summary?year={now.year}&month={now.month}")
+&gt;       res = await client.get(f"/api/v1/transactions/summary?year={now.year}&amp;month={now.month}")
               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 tests\test_transactions.py:125: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 .venv\Lib\site-packages\httpx\_client.py:1768: in get
     return await self.request(
 .venv\Lib\site-packages\httpx\_client.py:1540: in request
@@ -1502,14 +1443,14 @@ app\api\v1\transactions.py:65: in monthly_summary
     return await transaction_service.get_monthly_summary(current_user.tenant_id, db, year, month)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 app\services\transaction_service.py:115: in get_monthly_summary
-    Transaction.amount.filter(Transaction.amount > 0)  # type: ignore[attr-defined]
+    Transaction.amount.filter(Transaction.amount &gt; 0)  # type: ignore[attr-defined]
     ^^^^^^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
-self = <sqlalchemy.orm.attributes.InstrumentedAttribute object at 0x0000021028307560>
+self = &lt;sqlalchemy.orm.attributes.InstrumentedAttribute object at 0x00000193E4057560&gt;
 key = 'filter'
 
-    def __getattr__(self, key: str) -> Any:
+    def __getattr__(self, key: str) -&gt; Any:
         try:
             return util.MemoizedSlots.__getattr__(self, key)
         except AttributeError:
@@ -1518,7 +1459,7 @@ key = 'filter'
         try:
             return getattr(self.comparator, key)
         except AttributeError as err:
->           raise AttributeError(
+&gt;           raise AttributeError(
                 "Neither %r object nor %r object associated with %s "
                 "has an attribute %r"
                 % (
@@ -1530,20 +1471,4 @@ key = 'filter'
             ) from err
 E           AttributeError: Neither 'InstrumentedAttribute' object nor 'Comparator' object associated with Transaction.amount has an attribute 'filter'
 
-.venv\Lib\site-packages\sqlalchemy\orm\attributes.py:477: AttributeError
-=========================== short test summary info ===========================
-FAILED tests/test_categories.py::test_create_category - pydantic_core._pydant...
-FAILED tests/test_categories.py::test_create_subcategory - pydantic_core._pyd...
-FAILED tests/test_categories.py::test_list_categories_nested - pydantic_core....
-FAILED tests/test_categories.py::test_update_category - pydantic_core._pydant...
-FAILED tests/test_categories.py::test_delete_category - pydantic_core._pydant...
-FAILED tests/test_dashboard.py::test_dashboard_summary_empty - AttributeError...
-FAILED tests/test_dashboard.py::test_dashboard_summary_with_data - AttributeE...
-FAILED tests/test_dashboard.py::test_cash_flow - AttributeError: Neither 'Ins...
-FAILED tests/test_tasks.py::test_sync_all_tenants_dispatches - AttributeError...
-FAILED tests/test_transactions.py::test_monthly_summary - AttributeError: Nei...
-ERROR tests/test_rls_isolation.py::test_rls_prevents_cross_tenant_select
-ERROR tests/test_rls_isolation.py::test_rls_prevents_cross_tenant_insert
-ERROR tests/test_rls_isolation.py::test_tenant_isolation_account_creation
-ERROR tests/test_rls_isolation.py::test_missing_tenant_context_fails
-================== 10 failed, 35 passed, 4 errors in 14.89s ===================
+.venv\Lib\site-packages\sqlalchemy\orm\attributes.py:477: AttributeError</failure></testcase><testcase classname="tests.test_transactions" name="test_transaction_tenant_isolation" time="0.778" /><testcase classname="tests.test_webhooks" name="test_pluggy_webhook_item_updated" time="0.151" /><testcase classname="tests.test_webhooks" name="test_pluggy_webhook_transactions_created" time="0.034" /><testcase classname="tests.test_webhooks" name="test_pluggy_webhook_unknown_event" time="0.026" /><testcase classname="tests.test_webhooks" name="test_pluggy_webhook_item_error" time="0.030" /></testsuite></testsuites>
