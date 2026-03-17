@@ -1,0 +1,1474 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="4" failures="10" skipped="0" tests="49" time="13.016" timestamp="2026-03-16T22:20:08.144802-03:00" hostname="DESKTOP-H8KGF4P"><testcase classname="tests.test_accounts" name="test_create_account" time="0.260" /><testcase classname="tests.test_accounts" name="test_list_accounts" time="0.218" /><testcase classname="tests.test_accounts" name="test_get_account" time="0.209" /><testcase classname="tests.test_accounts" name="test_update_account" time="0.228" /><testcase classname="tests.test_accounts" name="test_delete_account" time="0.218" /><testcase classname="tests.test_accounts" name="test_account_isolation" time="0.763" /><testcase classname="tests.test_auth" name="test_register" time="0.214" /><testcase classname="tests.test_auth" name="test_login" time="0.387" /><testcase classname="tests.test_auth" name="test_login_wrong_password" time="0.394" /><testcase classname="tests.test_auth" name="test_me" time="0.215" /><testcase classname="tests.test_bills" name="test_get_bills_empty" time="0.218" /><testcase classname="tests.test_bills" name="test_get_bills_with_transactions" time="0.236" /><testcase classname="tests.test_bills" name="test_get_bills_not_credit_card" time="0.215" /><testcase classname="tests.test_bills" name="test_get_bills_custom_closing_day" time="0.222" /><testcase classname="tests.test_categories" name="test_create_category" time="0.213"><failure message="pydantic_core._pydantic_core.ValidationError: 1 validation error for CategoryOut&#10;children&#10;  Error extracting attribute: MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s) [type=get_attribute_error, input_value=&lt;app.models.category.Cate...t at 0x00000193E4AE3E00&gt;, input_type=Category]&#10;    For further information visit https://errors.pydantic.dev/2.12/v/get_attribute_error">auth_client = {'client': &lt;httpx.AsyncClient object at 0x00000193E5D14110&gt;, 'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOi...HAiOjE3NzM3MTQwMTIsInR5cGUiOiJhY2Nlc3MiLCJlbWFpbCI6ImRldkB2aXNvci5hcHAifQ.EvofrKyAcMWEoVSvQISMuNvd0wq9bEVG8ZU7AQ81ONY'}
+
+    @pytest.mark.asyncio
+    async def test_create_category(auth_client: dict):
+        client: AsyncClient = auth_client["client"]
+&gt;       res = await client.post("/api/v1/categories/", json={
+            "name": "Alimentação",
+            "icon": "#x1F354",
+            "color": "#FF6B6B",
+            "monthly_limit": "800.00",
+        })
+
+tests\test_categories.py:8: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\httpx\_client.py:1859: in post
+    return await self.request(
+.venv\Lib\site-packages\httpx\_client.py:1540: in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_client.py:1629: in send
+    response = await self._send_handling_auth(
+.venv\Lib\site-packages\httpx\_client.py:1657: in _send_handling_auth
+    response = await self._send_handling_redirects(
+.venv\Lib\site-packages\httpx\_client.py:1694: in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_client.py:1730: in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_transports\asgi.py:170: in handle_async_request
+    await self.app(scope, receive, send)
+.venv\Lib\site-packages\fastapi\applications.py:1160: in __call__
+    await super().__call__(scope, receive, send)
+.venv\Lib\site-packages\starlette\applications.py:107: in __call__
+    await self.middleware_stack(scope, receive, send)
+.venv\Lib\site-packages\starlette\middleware\errors.py:186: in __call__
+    raise exc
+.venv\Lib\site-packages\starlette\middleware\errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+.venv\Lib\site-packages\starlette\middleware\base.py:191: in __call__
+    with recv_stream, send_stream, collapse_excgroups():
+                                   ^^^^^^^^^^^^^^^^^^^^
+C:\Python314\Lib\contextlib.py:162: in __exit__
+    self.gen.throw(value)
+.venv\Lib\site-packages\starlette\_utils.py:87: in collapse_excgroups
+    raise exc
+.venv\Lib\site-packages\starlette\middleware\base.py:193: in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app\core\tenant_middleware.py:72: in dispatch
+    return await call_next(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\starlette\middleware\base.py:168: in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+.venv\Lib\site-packages\starlette\middleware\base.py:144: in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+.venv\Lib\site-packages\starlette\middleware\cors.py:87: in __call__
+    await self.app(scope, receive, send)
+.venv\Lib\site-packages\starlette\middleware\exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+.venv\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+.venv\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+.venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+.venv\Lib\site-packages\starlette\routing.py:716: in __call__
+    await self.middleware_stack(scope, receive, send)
+.venv\Lib\site-packages\starlette\routing.py:736: in app
+    await route.handle(scope, receive, send)
+.venv\Lib\site-packages\starlette\routing.py:290: in handle
+    await self.app(scope, receive, send)
+.venv\Lib\site-packages\fastapi\routing.py:130: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+.venv\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+.venv\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+.venv\Lib\site-packages\fastapi\routing.py:116: in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\fastapi\routing.py:670: in app
+    raw_response = await run_endpoint_function(
+.venv\Lib\site-packages\fastapi\routing.py:324: in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+data = CategoryCreate(name='Alimentação', icon='#x1F354', color='#FF6B6B', monthly_limit=Decimal('800.00'), parent_id=None)
+current_user = &lt;app.core.deps.CurrentUser object at 0x00000193E5CCFDD0&gt;
+db = &lt;sqlalchemy.ext.asyncio.session.AsyncSession object at 0x00000193E5CE1E10&gt;
+
+    @router.post("/", response_model=CategoryOut, status_code=status.HTTP_201_CREATED)
+    async def create_category(
+        data: CategoryCreate, current_user: AuthUser, db: DBSession
+    ) -&gt; CategoryOut:
+        cat = await category_service.create_category(data, current_user.tenant_id, db)
+&gt;       return CategoryOut.model_validate(cat)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for CategoryOut
+E       children
+E         Error extracting attribute: MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s) [type=get_attribute_error, input_value=&lt;app.models.category.Cate...t at 0x00000193E4AE3E00&gt;, input_type=Category]
+E           For further information visit https://errors.pydantic.dev/2.12/v/get_attribute_error
+
+app\api\v1\categories.py:24: ValidationError</failure></testcase><testcase classname="tests.test_categories" name="test_create_subcategory" time="0.207"><failure message="pydantic_core._pydantic_core.ValidationError: 1 validation error for CategoryOut&#10;children&#10;  Error extracting attribute: MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s) [type=get_attribute_error, input_value=&lt;app.models.category.Cate...t at 0x00000193E5CF2C10&gt;, input_type=Category]&#10;    For further information visit https://errors.pydantic.dev/2.12/v/get_attribute_error">auth_client = {'client': &lt;httpx.AsyncClient object at 0x00000193E5D8EED0&gt;, 'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOi...HAiOjE3NzM3MTQwMTIsInR5cGUiOiJhY2Nlc3MiLCJlbWFpbCI6ImRldkB2aXNvci5hcHAifQ.GongYWMuBqzOjn6tPfxiCeR_MGwE73V5vE0mmRZZAOY'}
+
+    @pytest.mark.asyncio
+    async def test_create_subcategory(auth_client: dict):
+        client: AsyncClient = auth_client["client"]
+    
+&gt;       parent = await client.post("/api/v1/categories/", json={"name": "Serviços"})
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_categories.py:24: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\httpx\_client.py:1859: in post
+    return await self.request(
+.venv\Lib\site-packages\httpx\_client.py:1540: in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_client.py:1629: in send
+    response = await self._send_handling_auth(
+.venv\Lib\site-packages\httpx\_client.py:1657: in _send_handling_auth
+    response = await self._send_handling_redirects(
+.venv\Lib\site-packages\httpx\_client.py:1694: in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_client.py:1730: in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_transports\asgi.py:170: in handle_async_request
+    await self.app(scope, receive, send)
+.venv\Lib\site-packages\fastapi\applications.py:1160: in __call__
+    await super().__call__(scope, receive, send)
+.venv\Lib\site-packages\starlette\applications.py:107: in __call__
+    await self.middleware_stack(scope, receive, send)
+.venv\Lib\site-packages\starlette\middleware\errors.py:186: in __call__
+    raise exc
+.venv\Lib\site-packages\starlette\middleware\errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+.venv\Lib\site-packages\starlette\middleware\base.py:191: in __call__
+    with recv_stream, send_stream, collapse_excgroups():
+                                   ^^^^^^^^^^^^^^^^^^^^
+C:\Python314\Lib\contextlib.py:162: in __exit__
+    self.gen.throw(value)
+.venv\Lib\site-packages\starlette\_utils.py:87: in collapse_excgroups
+    raise exc
+.venv\Lib\site-packages\starlette\middleware\base.py:193: in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app\core\tenant_middleware.py:72: in dispatch
+    return await call_next(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\starlette\middleware\base.py:168: in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+.venv\Lib\site-packages\starlette\middleware\base.py:144: in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+.venv\Lib\site-packages\starlette\middleware\cors.py:87: in __call__
+    await self.app(scope, receive, send)
+.venv\Lib\site-packages\starlette\middleware\exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+.venv\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+.venv\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+.venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+.venv\Lib\site-packages\starlette\routing.py:716: in __call__
+    await self.middleware_stack(scope, receive, send)
+.venv\Lib\site-packages\starlette\routing.py:736: in app
+    await route.handle(scope, receive, send)
+.venv\Lib\site-packages\starlette\routing.py:290: in handle
+    await self.app(scope, receive, send)
+.venv\Lib\site-packages\fastapi\routing.py:130: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+.venv\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+.venv\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+.venv\Lib\site-packages\fastapi\routing.py:116: in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\fastapi\routing.py:670: in app
+    raw_response = await run_endpoint_function(
+.venv\Lib\site-packages\fastapi\routing.py:324: in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+data = CategoryCreate(name='Serviços', icon=None, color=None, monthly_limit=None, parent_id=None)
+current_user = &lt;app.core.deps.CurrentUser object at 0x00000193E5E05DF0&gt;
+db = &lt;sqlalchemy.ext.asyncio.session.AsyncSession object at 0x00000193E5CE0A60&gt;
+
+    @router.post("/", response_model=CategoryOut, status_code=status.HTTP_201_CREATED)
+    async def create_category(
+        data: CategoryCreate, current_user: AuthUser, db: DBSession
+    ) -&gt; CategoryOut:
+        cat = await category_service.create_category(data, current_user.tenant_id, db)
+&gt;       return CategoryOut.model_validate(cat)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for CategoryOut
+E       children
+E         Error extracting attribute: MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s) [type=get_attribute_error, input_value=&lt;app.models.category.Cate...t at 0x00000193E5CF2C10&gt;, input_type=Category]
+E           For further information visit https://errors.pydantic.dev/2.12/v/get_attribute_error
+
+app\api\v1\categories.py:24: ValidationError</failure></testcase><testcase classname="tests.test_categories" name="test_list_categories_nested" time="0.212"><failure message="pydantic_core._pydantic_core.ValidationError: 1 validation error for CategoryOut&#10;children&#10;  Error extracting attribute: MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s) [type=get_attribute_error, input_value=&lt;app.models.category.Cate...t at 0x00000193E5FCCCD0&gt;, input_type=Category]&#10;    For further information visit https://errors.pydantic.dev/2.12/v/get_attribute_error">auth_client = {'client': &lt;httpx.AsyncClient object at 0x00000193E5D8FD10&gt;, 'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOi...HAiOjE3NzM3MTQwMTMsInR5cGUiOiJhY2Nlc3MiLCJlbWFpbCI6ImRldkB2aXNvci5hcHAifQ.YahD19fjXWySGFyvWBO8vZ6lmI3-pwGj_WDfyhoq1bY'}
+
+    @pytest.mark.asyncio
+    async def test_list_categories_nested(auth_client: dict):
+        client: AsyncClient = auth_client["client"]
+    
+&gt;       parent = await client.post("/api/v1/categories/", json={"name": "Serviços"})
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_categories.py:39: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\httpx\_client.py:1859: in post
+    return await self.request(
+.venv\Lib\site-packages\httpx\_client.py:1540: in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_client.py:1629: in send
+    response = await self._send_handling_auth(
+.venv\Lib\site-packages\httpx\_client.py:1657: in _send_handling_auth
+    response = await self._send_handling_redirects(
+.venv\Lib\site-packages\httpx\_client.py:1694: in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_client.py:1730: in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_transports\asgi.py:170: in handle_async_request
+    await self.app(scope, receive, send)
+.venv\Lib\site-packages\fastapi\applications.py:1160: in __call__
+    await super().__call__(scope, receive, send)
+.venv\Lib\site-packages\starlette\applications.py:107: in __call__
+    await self.middleware_stack(scope, receive, send)
+.venv\Lib\site-packages\starlette\middleware\errors.py:186: in __call__
+    raise exc
+.venv\Lib\site-packages\starlette\middleware\errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+.venv\Lib\site-packages\starlette\middleware\base.py:191: in __call__
+    with recv_stream, send_stream, collapse_excgroups():
+                                   ^^^^^^^^^^^^^^^^^^^^
+C:\Python314\Lib\contextlib.py:162: in __exit__
+    self.gen.throw(value)
+.venv\Lib\site-packages\starlette\_utils.py:87: in collapse_excgroups
+    raise exc
+.venv\Lib\site-packages\starlette\middleware\base.py:193: in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app\core\tenant_middleware.py:72: in dispatch
+    return await call_next(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\starlette\middleware\base.py:168: in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+.venv\Lib\site-packages\starlette\middleware\base.py:144: in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+.venv\Lib\site-packages\starlette\middleware\cors.py:87: in __call__
+    await self.app(scope, receive, send)
+.venv\Lib\site-packages\starlette\middleware\exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+.venv\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+.venv\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+.venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+.venv\Lib\site-packages\starlette\routing.py:716: in __call__
+    await self.middleware_stack(scope, receive, send)
+.venv\Lib\site-packages\starlette\routing.py:736: in app
+    await route.handle(scope, receive, send)
+.venv\Lib\site-packages\starlette\routing.py:290: in handle
+    await self.app(scope, receive, send)
+.venv\Lib\site-packages\fastapi\routing.py:130: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+.venv\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+.venv\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+.venv\Lib\site-packages\fastapi\routing.py:116: in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\fastapi\routing.py:670: in app
+    raw_response = await run_endpoint_function(
+.venv\Lib\site-packages\fastapi\routing.py:324: in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+data = CategoryCreate(name='Serviços', icon=None, color=None, monthly_limit=None, parent_id=None)
+current_user = &lt;app.core.deps.CurrentUser object at 0x00000193E6691FD0&gt;
+db = &lt;sqlalchemy.ext.asyncio.session.AsyncSession object at 0x00000193E668AC80&gt;
+
+    @router.post("/", response_model=CategoryOut, status_code=status.HTTP_201_CREATED)
+    async def create_category(
+        data: CategoryCreate, current_user: AuthUser, db: DBSession
+    ) -&gt; CategoryOut:
+        cat = await category_service.create_category(data, current_user.tenant_id, db)
+&gt;       return CategoryOut.model_validate(cat)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for CategoryOut
+E       children
+E         Error extracting attribute: MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s) [type=get_attribute_error, input_value=&lt;app.models.category.Cate...t at 0x00000193E5FCCCD0&gt;, input_type=Category]
+E           For further information visit https://errors.pydantic.dev/2.12/v/get_attribute_error
+
+app\api\v1\categories.py:24: ValidationError</failure></testcase><testcase classname="tests.test_categories" name="test_update_category" time="0.206"><failure message="pydantic_core._pydantic_core.ValidationError: 1 validation error for CategoryOut&#10;children&#10;  Error extracting attribute: MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s) [type=get_attribute_error, input_value=&lt;app.models.category.Cate...t at 0x00000193E5BF5E00&gt;, input_type=Category]&#10;    For further information visit https://errors.pydantic.dev/2.12/v/get_attribute_error">auth_client = {'client': &lt;httpx.AsyncClient object at 0x00000193E5D8F650&gt;, 'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOi...HAiOjE3NzM3MTQwMTMsInR5cGUiOiJhY2Nlc3MiLCJlbWFpbCI6ImRldkB2aXNvci5hcHAifQ.NFTKohH3OchR4xviCt315_LGbMGr2J7rFECAmwF2zc0'}
+
+    @pytest.mark.asyncio
+    async def test_update_category(auth_client: dict):
+        client: AsyncClient = auth_client["client"]
+&gt;       cat = await client.post("/api/v1/categories/", json={"name": "Compras"})
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_categories.py:56: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\httpx\_client.py:1859: in post
+    return await self.request(
+.venv\Lib\site-packages\httpx\_client.py:1540: in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_client.py:1629: in send
+    response = await self._send_handling_auth(
+.venv\Lib\site-packages\httpx\_client.py:1657: in _send_handling_auth
+    response = await self._send_handling_redirects(
+.venv\Lib\site-packages\httpx\_client.py:1694: in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_client.py:1730: in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_transports\asgi.py:170: in handle_async_request
+    await self.app(scope, receive, send)
+.venv\Lib\site-packages\fastapi\applications.py:1160: in __call__
+    await super().__call__(scope, receive, send)
+.venv\Lib\site-packages\starlette\applications.py:107: in __call__
+    await self.middleware_stack(scope, receive, send)
+.venv\Lib\site-packages\starlette\middleware\errors.py:186: in __call__
+    raise exc
+.venv\Lib\site-packages\starlette\middleware\errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+.venv\Lib\site-packages\starlette\middleware\base.py:191: in __call__
+    with recv_stream, send_stream, collapse_excgroups():
+                                   ^^^^^^^^^^^^^^^^^^^^
+C:\Python314\Lib\contextlib.py:162: in __exit__
+    self.gen.throw(value)
+.venv\Lib\site-packages\starlette\_utils.py:87: in collapse_excgroups
+    raise exc
+.venv\Lib\site-packages\starlette\middleware\base.py:193: in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app\core\tenant_middleware.py:72: in dispatch
+    return await call_next(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\starlette\middleware\base.py:168: in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+.venv\Lib\site-packages\starlette\middleware\base.py:144: in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+.venv\Lib\site-packages\starlette\middleware\cors.py:87: in __call__
+    await self.app(scope, receive, send)
+.venv\Lib\site-packages\starlette\middleware\exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+.venv\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+.venv\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+.venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+.venv\Lib\site-packages\starlette\routing.py:716: in __call__
+    await self.middleware_stack(scope, receive, send)
+.venv\Lib\site-packages\starlette\routing.py:736: in app
+    await route.handle(scope, receive, send)
+.venv\Lib\site-packages\starlette\routing.py:290: in handle
+    await self.app(scope, receive, send)
+.venv\Lib\site-packages\fastapi\routing.py:130: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+.venv\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+.venv\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+.venv\Lib\site-packages\fastapi\routing.py:116: in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\fastapi\routing.py:670: in app
+    raw_response = await run_endpoint_function(
+.venv\Lib\site-packages\fastapi\routing.py:324: in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+data = CategoryCreate(name='Compras', icon=None, color=None, monthly_limit=None, parent_id=None)
+current_user = &lt;app.core.deps.CurrentUser object at 0x00000193E6692750&gt;
+db = &lt;sqlalchemy.ext.asyncio.session.AsyncSession object at 0x00000193E609B8C0&gt;
+
+    @router.post("/", response_model=CategoryOut, status_code=status.HTTP_201_CREATED)
+    async def create_category(
+        data: CategoryCreate, current_user: AuthUser, db: DBSession
+    ) -&gt; CategoryOut:
+        cat = await category_service.create_category(data, current_user.tenant_id, db)
+&gt;       return CategoryOut.model_validate(cat)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for CategoryOut
+E       children
+E         Error extracting attribute: MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s) [type=get_attribute_error, input_value=&lt;app.models.category.Cate...t at 0x00000193E5BF5E00&gt;, input_type=Category]
+E           For further information visit https://errors.pydantic.dev/2.12/v/get_attribute_error
+
+app\api\v1\categories.py:24: ValidationError</failure></testcase><testcase classname="tests.test_categories" name="test_delete_category" time="0.205"><failure message="pydantic_core._pydantic_core.ValidationError: 1 validation error for CategoryOut&#10;children&#10;  Error extracting attribute: MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s) [type=get_attribute_error, input_value=&lt;app.models.category.Cate...t at 0x00000193E5BF6B10&gt;, input_type=Category]&#10;    For further information visit https://errors.pydantic.dev/2.12/v/get_attribute_error">auth_client = {'client': &lt;httpx.AsyncClient object at 0x00000193E5D8F710&gt;, 'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOi...HAiOjE3NzM3MTQwMTQsInR5cGUiOiJhY2Nlc3MiLCJlbWFpbCI6ImRldkB2aXNvci5hcHAifQ._drAuNsq0tOi65Ws8eqNgAd7bgr_iAfealEQQPCGlrQ'}
+
+    @pytest.mark.asyncio
+    async def test_delete_category(auth_client: dict):
+        client: AsyncClient = auth_client["client"]
+&gt;       cat = await client.post("/api/v1/categories/", json={"name": "Temporária"})
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_categories.py:70: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\httpx\_client.py:1859: in post
+    return await self.request(
+.venv\Lib\site-packages\httpx\_client.py:1540: in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_client.py:1629: in send
+    response = await self._send_handling_auth(
+.venv\Lib\site-packages\httpx\_client.py:1657: in _send_handling_auth
+    response = await self._send_handling_redirects(
+.venv\Lib\site-packages\httpx\_client.py:1694: in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_client.py:1730: in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_transports\asgi.py:170: in handle_async_request
+    await self.app(scope, receive, send)
+.venv\Lib\site-packages\fastapi\applications.py:1160: in __call__
+    await super().__call__(scope, receive, send)
+.venv\Lib\site-packages\starlette\applications.py:107: in __call__
+    await self.middleware_stack(scope, receive, send)
+.venv\Lib\site-packages\starlette\middleware\errors.py:186: in __call__
+    raise exc
+.venv\Lib\site-packages\starlette\middleware\errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+.venv\Lib\site-packages\starlette\middleware\base.py:191: in __call__
+    with recv_stream, send_stream, collapse_excgroups():
+                                   ^^^^^^^^^^^^^^^^^^^^
+C:\Python314\Lib\contextlib.py:162: in __exit__
+    self.gen.throw(value)
+.venv\Lib\site-packages\starlette\_utils.py:87: in collapse_excgroups
+    raise exc
+.venv\Lib\site-packages\starlette\middleware\base.py:193: in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app\core\tenant_middleware.py:72: in dispatch
+    return await call_next(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\starlette\middleware\base.py:168: in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+.venv\Lib\site-packages\starlette\middleware\base.py:144: in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+.venv\Lib\site-packages\starlette\middleware\cors.py:87: in __call__
+    await self.app(scope, receive, send)
+.venv\Lib\site-packages\starlette\middleware\exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+.venv\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+.venv\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+.venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+.venv\Lib\site-packages\starlette\routing.py:716: in __call__
+    await self.middleware_stack(scope, receive, send)
+.venv\Lib\site-packages\starlette\routing.py:736: in app
+    await route.handle(scope, receive, send)
+.venv\Lib\site-packages\starlette\routing.py:290: in handle
+    await self.app(scope, receive, send)
+.venv\Lib\site-packages\fastapi\routing.py:130: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+.venv\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+.venv\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+.venv\Lib\site-packages\fastapi\routing.py:116: in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\fastapi\routing.py:670: in app
+    raw_response = await run_endpoint_function(
+.venv\Lib\site-packages\fastapi\routing.py:324: in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+data = CategoryCreate(name='Temporária', icon=None, color=None, monthly_limit=None, parent_id=None)
+current_user = &lt;app.core.deps.CurrentUser object at 0x00000193E5C84350&gt;
+db = &lt;sqlalchemy.ext.asyncio.session.AsyncSession object at 0x00000193E60995C0&gt;
+
+    @router.post("/", response_model=CategoryOut, status_code=status.HTTP_201_CREATED)
+    async def create_category(
+        data: CategoryCreate, current_user: AuthUser, db: DBSession
+    ) -&gt; CategoryOut:
+        cat = await category_service.create_category(data, current_user.tenant_id, db)
+&gt;       return CategoryOut.model_validate(cat)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for CategoryOut
+E       children
+E         Error extracting attribute: MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s) [type=get_attribute_error, input_value=&lt;app.models.category.Cate...t at 0x00000193E5BF6B10&gt;, input_type=Category]
+E           For further information visit https://errors.pydantic.dev/2.12/v/get_attribute_error
+
+app\api\v1\categories.py:24: ValidationError</failure></testcase><testcase classname="tests.test_dashboard" name="test_dashboard_summary_empty" time="0.206"><failure message="AttributeError: Neither 'InstrumentedAttribute' object nor 'Comparator' object associated with Transaction.amount has an attribute 'filter'">self = Column('amount', Numeric(precision=14, scale=2), table=&lt;transactions&gt;, nullable=False)
+key = 'filter'
+
+    def __getattr__(self, key: str) -&gt; Any:
+        try:
+&gt;           return getattr(self.comparator, key)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Comparator' object has no attribute 'filter'
+
+.venv\Lib\site-packages\sqlalchemy\sql\elements.py:1518: AttributeError
+
+The above exception was the direct cause of the following exception:
+
+self = &lt;sqlalchemy.orm.attributes.InstrumentedAttribute object at 0x00000193E4057560&gt;
+key = 'filter'
+
+    def __getattr__(self, key: str) -&gt; Any:
+        try:
+            return util.MemoizedSlots.__getattr__(self, key)
+        except AttributeError:
+            pass
+    
+        try:
+&gt;           return getattr(self.comparator, key)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.venv\Lib\site-packages\sqlalchemy\orm\attributes.py:475: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\sqlalchemy\util\langhelpers.py:1313: in __getattr__
+    return self._fallback_getattr(key)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\sqlalchemy\orm\properties.py:474: in _fallback_getattr
+    return getattr(self.__clause_element__(), key)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Column('amount', Numeric(precision=14, scale=2), table=&lt;transactions&gt;, nullable=False)
+key = 'filter'
+
+    def __getattr__(self, key: str) -&gt; Any:
+        try:
+            return getattr(self.comparator, key)
+        except AttributeError as err:
+&gt;           raise AttributeError(
+                "Neither %r object nor %r object has an attribute %r"
+                % (
+                    type(self).__name__,
+                    type(self.comparator).__name__,
+                    key,
+                )
+            ) from err
+E           AttributeError: Neither 'AnnotatedColumn' object nor 'Comparator' object has an attribute 'filter'
+
+.venv\Lib\site-packages\sqlalchemy\sql\elements.py:1520: AttributeError
+
+The above exception was the direct cause of the following exception:
+
+auth_client = {'client': &lt;httpx.AsyncClient object at 0x00000193E5D8D490&gt;, 'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOi...HAiOjE3NzM3MTQwMTQsInR5cGUiOiJhY2Nlc3MiLCJlbWFpbCI6ImRldkB2aXNvci5hcHAifQ.Abdz1U0n3TfsUirUbHDVvDbHw9EumblYzSwyTu0RScQ'}
+
+    @pytest.mark.asyncio
+    async def test_dashboard_summary_empty(auth_client: dict):
+        client: AsyncClient = auth_client["client"]
+        now = datetime.now(timezone.utc)
+&gt;       res = await client.get(f"/api/v1/dashboard/summary?year={now.year}&amp;month={now.month}")
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_dashboard.py:11: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\httpx\_client.py:1768: in get
+    return await self.request(
+.venv\Lib\site-packages\httpx\_client.py:1540: in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_client.py:1629: in send
+    response = await self._send_handling_auth(
+.venv\Lib\site-packages\httpx\_client.py:1657: in _send_handling_auth
+    response = await self._send_handling_redirects(
+.venv\Lib\site-packages\httpx\_client.py:1694: in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_client.py:1730: in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_transports\asgi.py:170: in handle_async_request
+    await self.app(scope, receive, send)
+.venv\Lib\site-packages\fastapi\applications.py:1160: in __call__
+    await super().__call__(scope, receive, send)
+.venv\Lib\site-packages\starlette\applications.py:107: in __call__
+    await self.middleware_stack(scope, receive, send)
+.venv\Lib\site-packages\starlette\middleware\errors.py:186: in __call__
+    raise exc
+.venv\Lib\site-packages\starlette\middleware\errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+.venv\Lib\site-packages\starlette\middleware\base.py:191: in __call__
+    with recv_stream, send_stream, collapse_excgroups():
+                                   ^^^^^^^^^^^^^^^^^^^^
+C:\Python314\Lib\contextlib.py:162: in __exit__
+    self.gen.throw(value)
+.venv\Lib\site-packages\starlette\_utils.py:87: in collapse_excgroups
+    raise exc
+.venv\Lib\site-packages\starlette\middleware\base.py:193: in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app\core\tenant_middleware.py:72: in dispatch
+    return await call_next(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\starlette\middleware\base.py:168: in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+.venv\Lib\site-packages\starlette\middleware\base.py:144: in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+.venv\Lib\site-packages\starlette\middleware\cors.py:87: in __call__
+    await self.app(scope, receive, send)
+.venv\Lib\site-packages\starlette\middleware\exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+.venv\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+.venv\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+.venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+.venv\Lib\site-packages\starlette\routing.py:716: in __call__
+    await self.middleware_stack(scope, receive, send)
+.venv\Lib\site-packages\starlette\routing.py:736: in app
+    await route.handle(scope, receive, send)
+.venv\Lib\site-packages\starlette\routing.py:290: in handle
+    await self.app(scope, receive, send)
+.venv\Lib\site-packages\fastapi\routing.py:130: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+.venv\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+.venv\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+.venv\Lib\site-packages\fastapi\routing.py:116: in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\fastapi\routing.py:670: in app
+    raw_response = await run_endpoint_function(
+.venv\Lib\site-packages\fastapi\routing.py:324: in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app\api\v1\dashboard.py:24: in summary
+    monthly = await transaction_service.get_monthly_summary(
+app\services\transaction_service.py:115: in get_monthly_summary
+    Transaction.amount.filter(Transaction.amount &gt; 0)  # type: ignore[attr-defined]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;sqlalchemy.orm.attributes.InstrumentedAttribute object at 0x00000193E4057560&gt;
+key = 'filter'
+
+    def __getattr__(self, key: str) -&gt; Any:
+        try:
+            return util.MemoizedSlots.__getattr__(self, key)
+        except AttributeError:
+            pass
+    
+        try:
+            return getattr(self.comparator, key)
+        except AttributeError as err:
+&gt;           raise AttributeError(
+                "Neither %r object nor %r object associated with %s "
+                "has an attribute %r"
+                % (
+                    type(self).__name__,
+                    type(self.comparator).__name__,
+                    self,
+                    key,
+                )
+            ) from err
+E           AttributeError: Neither 'InstrumentedAttribute' object nor 'Comparator' object associated with Transaction.amount has an attribute 'filter'
+
+.venv\Lib\site-packages\sqlalchemy\orm\attributes.py:477: AttributeError</failure></testcase><testcase classname="tests.test_dashboard" name="test_dashboard_summary_with_data" time="0.215"><failure message="AttributeError: Neither 'InstrumentedAttribute' object nor 'Comparator' object associated with Transaction.amount has an attribute 'filter'">self = Column('amount', Numeric(precision=14, scale=2), table=&lt;transactions&gt;, nullable=False)
+key = 'filter'
+
+    def __getattr__(self, key: str) -&gt; Any:
+        try:
+&gt;           return getattr(self.comparator, key)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Comparator' object has no attribute 'filter'
+
+.venv\Lib\site-packages\sqlalchemy\sql\elements.py:1518: AttributeError
+
+The above exception was the direct cause of the following exception:
+
+self = &lt;sqlalchemy.orm.attributes.InstrumentedAttribute object at 0x00000193E4057560&gt;
+key = 'filter'
+
+    def __getattr__(self, key: str) -&gt; Any:
+        try:
+            return util.MemoizedSlots.__getattr__(self, key)
+        except AttributeError:
+            pass
+    
+        try:
+&gt;           return getattr(self.comparator, key)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.venv\Lib\site-packages\sqlalchemy\orm\attributes.py:475: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\sqlalchemy\util\langhelpers.py:1313: in __getattr__
+    return self._fallback_getattr(key)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\sqlalchemy\orm\properties.py:474: in _fallback_getattr
+    return getattr(self.__clause_element__(), key)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Column('amount', Numeric(precision=14, scale=2), table=&lt;transactions&gt;, nullable=False)
+key = 'filter'
+
+    def __getattr__(self, key: str) -&gt; Any:
+        try:
+            return getattr(self.comparator, key)
+        except AttributeError as err:
+&gt;           raise AttributeError(
+                "Neither %r object nor %r object has an attribute %r"
+                % (
+                    type(self).__name__,
+                    type(self.comparator).__name__,
+                    key,
+                )
+            ) from err
+E           AttributeError: Neither 'AnnotatedColumn' object nor 'Comparator' object has an attribute 'filter'
+
+.venv\Lib\site-packages\sqlalchemy\sql\elements.py:1520: AttributeError
+
+The above exception was the direct cause of the following exception:
+
+auth_client = {'client': &lt;httpx.AsyncClient object at 0x00000193E5D8EED0&gt;, 'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOi...HAiOjE3NzM3MTQwMTUsInR5cGUiOiJhY2Nlc3MiLCJlbWFpbCI6ImRldkB2aXNvci5hcHAifQ.M7Q1qPFvJ6eGyVEMKZCv5dEYog4tgKrPAlntaJJwgR4'}
+sample_account = {'balance': '1500.00', 'created_at': '2026-03-17T01:20:15', 'credit_limit': None, 'id': '608a4b21-d0ea-4ef0-8fef-ab7c2d15be48', ...}
+
+    @pytest.mark.asyncio
+    async def test_dashboard_summary_with_data(auth_client: dict, sample_account: dict):
+        client: AsyncClient = auth_client["client"]
+        now = datetime.now(timezone.utc)
+    
+        # Receita
+        await client.post("/api/v1/transactions/", json={
+            "account_id": sample_account["id"],
+            "description": "Salário",
+            "amount": "6000.00",
+            "type": "credit",
+            "date": now.isoformat(),
+        })
+        # Despesa
+        await client.post("/api/v1/transactions/", json={
+            "account_id": sample_account["id"],
+            "description": "Aluguel",
+            "amount": "-1500.00",
+            "type": "debit",
+            "date": now.isoformat(),
+        })
+    
+&gt;       res = await client.get(f"/api/v1/dashboard/summary?year={now.year}&amp;month={now.month}")
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_dashboard.py:42: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\httpx\_client.py:1768: in get
+    return await self.request(
+.venv\Lib\site-packages\httpx\_client.py:1540: in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_client.py:1629: in send
+    response = await self._send_handling_auth(
+.venv\Lib\site-packages\httpx\_client.py:1657: in _send_handling_auth
+    response = await self._send_handling_redirects(
+.venv\Lib\site-packages\httpx\_client.py:1694: in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_client.py:1730: in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_transports\asgi.py:170: in handle_async_request
+    await self.app(scope, receive, send)
+.venv\Lib\site-packages\fastapi\applications.py:1160: in __call__
+    await super().__call__(scope, receive, send)
+.venv\Lib\site-packages\starlette\applications.py:107: in __call__
+    await self.middleware_stack(scope, receive, send)
+.venv\Lib\site-packages\starlette\middleware\errors.py:186: in __call__
+    raise exc
+.venv\Lib\site-packages\starlette\middleware\errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+.venv\Lib\site-packages\starlette\middleware\base.py:191: in __call__
+    with recv_stream, send_stream, collapse_excgroups():
+                                   ^^^^^^^^^^^^^^^^^^^^
+C:\Python314\Lib\contextlib.py:162: in __exit__
+    self.gen.throw(value)
+.venv\Lib\site-packages\starlette\_utils.py:87: in collapse_excgroups
+    raise exc
+.venv\Lib\site-packages\starlette\middleware\base.py:193: in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app\core\tenant_middleware.py:72: in dispatch
+    return await call_next(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\starlette\middleware\base.py:168: in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+.venv\Lib\site-packages\starlette\middleware\base.py:144: in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+.venv\Lib\site-packages\starlette\middleware\cors.py:87: in __call__
+    await self.app(scope, receive, send)
+.venv\Lib\site-packages\starlette\middleware\exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+.venv\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+.venv\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+.venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+.venv\Lib\site-packages\starlette\routing.py:716: in __call__
+    await self.middleware_stack(scope, receive, send)
+.venv\Lib\site-packages\starlette\routing.py:736: in app
+    await route.handle(scope, receive, send)
+.venv\Lib\site-packages\starlette\routing.py:290: in handle
+    await self.app(scope, receive, send)
+.venv\Lib\site-packages\fastapi\routing.py:130: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+.venv\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+.venv\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+.venv\Lib\site-packages\fastapi\routing.py:116: in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\fastapi\routing.py:670: in app
+    raw_response = await run_endpoint_function(
+.venv\Lib\site-packages\fastapi\routing.py:324: in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app\api\v1\dashboard.py:24: in summary
+    monthly = await transaction_service.get_monthly_summary(
+app\services\transaction_service.py:115: in get_monthly_summary
+    Transaction.amount.filter(Transaction.amount &gt; 0)  # type: ignore[attr-defined]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;sqlalchemy.orm.attributes.InstrumentedAttribute object at 0x00000193E4057560&gt;
+key = 'filter'
+
+    def __getattr__(self, key: str) -&gt; Any:
+        try:
+            return util.MemoizedSlots.__getattr__(self, key)
+        except AttributeError:
+            pass
+    
+        try:
+            return getattr(self.comparator, key)
+        except AttributeError as err:
+&gt;           raise AttributeError(
+                "Neither %r object nor %r object associated with %s "
+                "has an attribute %r"
+                % (
+                    type(self).__name__,
+                    type(self.comparator).__name__,
+                    self,
+                    key,
+                )
+            ) from err
+E           AttributeError: Neither 'InstrumentedAttribute' object nor 'Comparator' object associated with Transaction.amount has an attribute 'filter'
+
+.venv\Lib\site-packages\sqlalchemy\orm\attributes.py:477: AttributeError</failure></testcase><testcase classname="tests.test_dashboard" name="test_cash_flow" time="0.204"><failure message="AttributeError: Neither 'InstrumentedAttribute' object nor 'Comparator' object associated with Transaction.amount has an attribute 'filter'">self = Column('amount', Numeric(precision=14, scale=2), table=&lt;transactions&gt;, nullable=False)
+key = 'filter'
+
+    def __getattr__(self, key: str) -&gt; Any:
+        try:
+&gt;           return getattr(self.comparator, key)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Comparator' object has no attribute 'filter'
+
+.venv\Lib\site-packages\sqlalchemy\sql\elements.py:1518: AttributeError
+
+The above exception was the direct cause of the following exception:
+
+self = &lt;sqlalchemy.orm.attributes.InstrumentedAttribute object at 0x00000193E4057560&gt;
+key = 'filter'
+
+    def __getattr__(self, key: str) -&gt; Any:
+        try:
+            return util.MemoizedSlots.__getattr__(self, key)
+        except AttributeError:
+            pass
+    
+        try:
+&gt;           return getattr(self.comparator, key)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.venv\Lib\site-packages\sqlalchemy\orm\attributes.py:475: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\sqlalchemy\util\langhelpers.py:1313: in __getattr__
+    return self._fallback_getattr(key)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\sqlalchemy\orm\properties.py:474: in _fallback_getattr
+    return getattr(self.__clause_element__(), key)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Column('amount', Numeric(precision=14, scale=2), table=&lt;transactions&gt;, nullable=False)
+key = 'filter'
+
+    def __getattr__(self, key: str) -&gt; Any:
+        try:
+            return getattr(self.comparator, key)
+        except AttributeError as err:
+&gt;           raise AttributeError(
+                "Neither %r object nor %r object has an attribute %r"
+                % (
+                    type(self).__name__,
+                    type(self.comparator).__name__,
+                    key,
+                )
+            ) from err
+E           AttributeError: Neither 'AnnotatedColumn' object nor 'Comparator' object has an attribute 'filter'
+
+.venv\Lib\site-packages\sqlalchemy\sql\elements.py:1520: AttributeError
+
+The above exception was the direct cause of the following exception:
+
+auth_client = {'client': &lt;httpx.AsyncClient object at 0x00000193E5C7A450&gt;, 'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOi...HAiOjE3NzM3MTQwMTUsInR5cGUiOiJhY2Nlc3MiLCJlbWFpbCI6ImRldkB2aXNvci5hcHAifQ.4-MK8Wq848pZ34fkzM6UddV-IA8SXfDHt9SmEn8lohE'}
+
+    @pytest.mark.asyncio
+    async def test_cash_flow(auth_client: dict):
+        client: AsyncClient = auth_client["client"]
+&gt;       res = await client.get("/api/v1/dashboard/cash-flow?months=3")
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_dashboard.py:53: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\httpx\_client.py:1768: in get
+    return await self.request(
+.venv\Lib\site-packages\httpx\_client.py:1540: in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_client.py:1629: in send
+    response = await self._send_handling_auth(
+.venv\Lib\site-packages\httpx\_client.py:1657: in _send_handling_auth
+    response = await self._send_handling_redirects(
+.venv\Lib\site-packages\httpx\_client.py:1694: in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_client.py:1730: in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_transports\asgi.py:170: in handle_async_request
+    await self.app(scope, receive, send)
+.venv\Lib\site-packages\fastapi\applications.py:1160: in __call__
+    await super().__call__(scope, receive, send)
+.venv\Lib\site-packages\starlette\applications.py:107: in __call__
+    await self.middleware_stack(scope, receive, send)
+.venv\Lib\site-packages\starlette\middleware\errors.py:186: in __call__
+    raise exc
+.venv\Lib\site-packages\starlette\middleware\errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+.venv\Lib\site-packages\starlette\middleware\base.py:191: in __call__
+    with recv_stream, send_stream, collapse_excgroups():
+                                   ^^^^^^^^^^^^^^^^^^^^
+C:\Python314\Lib\contextlib.py:162: in __exit__
+    self.gen.throw(value)
+.venv\Lib\site-packages\starlette\_utils.py:87: in collapse_excgroups
+    raise exc
+.venv\Lib\site-packages\starlette\middleware\base.py:193: in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app\core\tenant_middleware.py:72: in dispatch
+    return await call_next(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\starlette\middleware\base.py:168: in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+.venv\Lib\site-packages\starlette\middleware\base.py:144: in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+.venv\Lib\site-packages\starlette\middleware\cors.py:87: in __call__
+    await self.app(scope, receive, send)
+.venv\Lib\site-packages\starlette\middleware\exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+.venv\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+.venv\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+.venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+.venv\Lib\site-packages\starlette\routing.py:716: in __call__
+    await self.middleware_stack(scope, receive, send)
+.venv\Lib\site-packages\starlette\routing.py:736: in app
+    await route.handle(scope, receive, send)
+.venv\Lib\site-packages\starlette\routing.py:290: in handle
+    await self.app(scope, receive, send)
+.venv\Lib\site-packages\fastapi\routing.py:130: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+.venv\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+.venv\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+.venv\Lib\site-packages\fastapi\routing.py:116: in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\fastapi\routing.py:670: in app
+    raw_response = await run_endpoint_function(
+.venv\Lib\site-packages\fastapi\routing.py:324: in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app\api\v1\dashboard.py:57: in cash_flow
+    data = await transaction_service.get_monthly_summary(current_user.tenant_id, db, y, m)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app\services\transaction_service.py:115: in get_monthly_summary
+    Transaction.amount.filter(Transaction.amount &gt; 0)  # type: ignore[attr-defined]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;sqlalchemy.orm.attributes.InstrumentedAttribute object at 0x00000193E4057560&gt;
+key = 'filter'
+
+    def __getattr__(self, key: str) -&gt; Any:
+        try:
+            return util.MemoizedSlots.__getattr__(self, key)
+        except AttributeError:
+            pass
+    
+        try:
+            return getattr(self.comparator, key)
+        except AttributeError as err:
+&gt;           raise AttributeError(
+                "Neither %r object nor %r object associated with %s "
+                "has an attribute %r"
+                % (
+                    type(self).__name__,
+                    type(self.comparator).__name__,
+                    self,
+                    key,
+                )
+            ) from err
+E           AttributeError: Neither 'InstrumentedAttribute' object nor 'Comparator' object associated with Transaction.amount has an attribute 'filter'
+
+.venv\Lib\site-packages\sqlalchemy\orm\attributes.py:477: AttributeError</failure></testcase><testcase classname="tests.test_open_finance" name="test_create_connect_token" time="0.213" /><testcase classname="tests.test_open_finance" name="test_create_connect_token_with_item_id" time="0.209" /><testcase classname="tests.test_open_finance" name="test_trigger_sync" time="0.218" /><testcase classname="tests.test_open_finance" name="test_disconnect_item_not_found" time="0.211" /><testcase classname="tests.test_recurrences" name="test_list_recurrences_empty" time="0.211" /><testcase classname="tests.test_recurrences" name="test_detect_installments" time="0.230" /><testcase classname="tests.test_recurrences" name="test_detect_fixed_recurring" time="0.234" /><testcase classname="tests.test_recurrences" name="test_update_recurrence" time="0.241" /><testcase classname="tests.test_rls_isolation" name="test_rls_prevents_cross_tenant_select" time="0.021"><error message="failed on setup with &quot;file C:\Users\felipedovinhoo\OneDrive\01_Projetos\02_apps\02_app_fin\backend\tests\test_rls_isolation.py, line 57&#10;  @pytest.mark.asyncio&#10;  async def test_rls_prevents_cross_tenant_select(&#10;      db_session: AsyncSession, tenant1, tenant2, user1, user2&#10;  ):&#10;      &quot;&quot;&quot;&#10;      Testa se RLS impede leitura de dados de outro tenant.&#10;      &quot;&quot;&quot;&#10;      # Adicionar tenants e usuários ao banco&#10;      db_session.add(tenant1)&#10;      db_session.add(tenant2)&#10;      db_session.add(user1)&#10;      db_session.add(user2)&#10;      await db_session.commit()&#10;&#10;      # Criar categorias para cada tenant&#10;      cat1 = Category(&#10;          id=uuid4(),&#10;          name=&quot;Supermercado&quot;,&#10;          color=&quot;#FF0000&quot;,&#10;          tenant_id=tenant1.id,&#10;      )&#10;      cat2 = Category(&#10;          id=uuid4(),&#10;          name=&quot;Gasolina&quot;,&#10;          color=&quot;#00FF00&quot;,&#10;          tenant_id=tenant2.id,&#10;      )&#10;&#10;      db_session.add(cat1)&#10;      db_session.add(cat2)&#10;      await db_session.commit()&#10;&#10;      # Aplicar contexto do user1 (tenant 1)&#10;      await apply_tenant_context(db_session, tenant1.id, user1.id)&#10;&#10;      # Executar query - deve retornar apenas 1 categoria&#10;      from sqlalchemy import select&#10;&#10;      result = await db_session.execute(select(Category))&#10;      categories = result.scalars().all()&#10;&#10;      assert len(categories) == 1&#10;      assert categories[0].id == cat1.id&#10;      assert categories[0].tenant_id == tenant1.id&#10;&#10;      # Limpar&#10;      await clear_tenant_context(db_session)&#10;E       fixture 'db_session' not found&#10;&gt;       available fixtures: _class_scoped_runner, _function_scoped_runner, _module_scoped_runner, _package_scoped_runner, _session_scoped_runner, anyio_backend, anyio_backend_name, anyio_backend_options, auth_client, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, client, doctest_namespace, event_loop_policy, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_account, setup_db, subtests, tenant1, tenant2, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory, user1, user2&#10;&gt;       use 'pytest --fixtures [testpath]' for help on them.&#10;&#10;C:\Users\felipedovinhoo\OneDrive\01_Projetos\02_apps\02_app_fin\backend\tests\test_rls_isolation.py:57&quot;">file C:\Users\felipedovinhoo\OneDrive\01_Projetos\02_apps\02_app_fin\backend\tests\test_rls_isolation.py, line 57
+  @pytest.mark.asyncio
+  async def test_rls_prevents_cross_tenant_select(
+      db_session: AsyncSession, tenant1, tenant2, user1, user2
+  ):
+      """
+      Testa se RLS impede leitura de dados de outro tenant.
+      """
+      # Adicionar tenants e usuários ao banco
+      db_session.add(tenant1)
+      db_session.add(tenant2)
+      db_session.add(user1)
+      db_session.add(user2)
+      await db_session.commit()
+
+      # Criar categorias para cada tenant
+      cat1 = Category(
+          id=uuid4(),
+          name="Supermercado",
+          color="#FF0000",
+          tenant_id=tenant1.id,
+      )
+      cat2 = Category(
+          id=uuid4(),
+          name="Gasolina",
+          color="#00FF00",
+          tenant_id=tenant2.id,
+      )
+
+      db_session.add(cat1)
+      db_session.add(cat2)
+      await db_session.commit()
+
+      # Aplicar contexto do user1 (tenant 1)
+      await apply_tenant_context(db_session, tenant1.id, user1.id)
+
+      # Executar query - deve retornar apenas 1 categoria
+      from sqlalchemy import select
+
+      result = await db_session.execute(select(Category))
+      categories = result.scalars().all()
+
+      assert len(categories) == 1
+      assert categories[0].id == cat1.id
+      assert categories[0].tenant_id == tenant1.id
+
+      # Limpar
+      await clear_tenant_context(db_session)
+E       fixture 'db_session' not found
+&gt;       available fixtures: _class_scoped_runner, _function_scoped_runner, _module_scoped_runner, _package_scoped_runner, _session_scoped_runner, anyio_backend, anyio_backend_name, anyio_backend_options, auth_client, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, client, doctest_namespace, event_loop_policy, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_account, setup_db, subtests, tenant1, tenant2, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory, user1, user2
+&gt;       use 'pytest --fixtures [testpath]' for help on them.
+
+C:\Users\felipedovinhoo\OneDrive\01_Projetos\02_apps\02_app_fin\backend\tests\test_rls_isolation.py:57</error></testcase><testcase classname="tests.test_rls_isolation" name="test_rls_prevents_cross_tenant_insert" time="0.020"><error message="failed on setup with &quot;file C:\Users\felipedovinhoo\OneDrive\01_Projetos\02_apps\02_app_fin\backend\tests\test_rls_isolation.py, line 106&#10;  @pytest.mark.asyncio&#10;  async def test_rls_prevents_cross_tenant_insert(&#10;      db_session: AsyncSession, tenant1, tenant2, user1&#10;  ):&#10;      &quot;&quot;&quot;&#10;      Testa se RLS impede inserção de dados com tenant_id diferente.&#10;      &quot;&quot;&quot;&#10;      # Adicionar tenants&#10;      db_session.add(tenant1)&#10;      db_session.add(tenant2)&#10;      await db_session.commit()&#10;&#10;      # Aplicar contexto do user1 (tenant 1)&#10;      await apply_tenant_context(db_session, tenant1.id, user1.id)&#10;&#10;      # Tentar inserir categoria com tenant_id != user1.tenant_id&#10;      # Isso deveria ser bloqueado pelo RLS&#10;      cat = Category(&#10;          id=uuid4(),&#10;          name=&quot;Maledicta&quot;,&#10;          color=&quot;#FF0000&quot;,&#10;          tenant_id=tenant2.id,  # tenant diferente!&#10;      )&#10;&#10;      db_session.add(cat)&#10;&#10;      # RLS deveria bloquear com uma exception&#10;      with pytest.raises(Exception):  # ProgrammingError ou similar&#10;          await db_session.commit()&#10;&#10;      await clear_tenant_context(db_session)&#10;E       fixture 'db_session' not found&#10;&gt;       available fixtures: _class_scoped_runner, _function_scoped_runner, _module_scoped_runner, _package_scoped_runner, _session_scoped_runner, anyio_backend, anyio_backend_name, anyio_backend_options, auth_client, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, client, doctest_namespace, event_loop_policy, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_account, setup_db, subtests, tenant1, tenant2, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory, user1, user2&#10;&gt;       use 'pytest --fixtures [testpath]' for help on them.&#10;&#10;C:\Users\felipedovinhoo\OneDrive\01_Projetos\02_apps\02_app_fin\backend\tests\test_rls_isolation.py:106&quot;">file C:\Users\felipedovinhoo\OneDrive\01_Projetos\02_apps\02_app_fin\backend\tests\test_rls_isolation.py, line 106
+  @pytest.mark.asyncio
+  async def test_rls_prevents_cross_tenant_insert(
+      db_session: AsyncSession, tenant1, tenant2, user1
+  ):
+      """
+      Testa se RLS impede inserção de dados com tenant_id diferente.
+      """
+      # Adicionar tenants
+      db_session.add(tenant1)
+      db_session.add(tenant2)
+      await db_session.commit()
+
+      # Aplicar contexto do user1 (tenant 1)
+      await apply_tenant_context(db_session, tenant1.id, user1.id)
+
+      # Tentar inserir categoria com tenant_id != user1.tenant_id
+      # Isso deveria ser bloqueado pelo RLS
+      cat = Category(
+          id=uuid4(),
+          name="Maledicta",
+          color="#FF0000",
+          tenant_id=tenant2.id,  # tenant diferente!
+      )
+
+      db_session.add(cat)
+
+      # RLS deveria bloquear com uma exception
+      with pytest.raises(Exception):  # ProgrammingError ou similar
+          await db_session.commit()
+
+      await clear_tenant_context(db_session)
+E       fixture 'db_session' not found
+&gt;       available fixtures: _class_scoped_runner, _function_scoped_runner, _module_scoped_runner, _package_scoped_runner, _session_scoped_runner, anyio_backend, anyio_backend_name, anyio_backend_options, auth_client, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, client, doctest_namespace, event_loop_policy, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_account, setup_db, subtests, tenant1, tenant2, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory, user1, user2
+&gt;       use 'pytest --fixtures [testpath]' for help on them.
+
+C:\Users\felipedovinhoo\OneDrive\01_Projetos\02_apps\02_app_fin\backend\tests\test_rls_isolation.py:106</error></testcase><testcase classname="tests.test_rls_isolation" name="test_context_variables_isolation" time="0.202" /><testcase classname="tests.test_rls_isolation" name="test_tenant_isolation_account_creation" time="0.020"><error message="failed on setup with &quot;file C:\Users\felipedovinhoo\OneDrive\01_Projetos\02_apps\02_app_fin\backend\tests\test_rls_isolation.py, line 163&#10;  @pytest.mark.asyncio&#10;  async def test_tenant_isolation_account_creation(&#10;      db_session: AsyncSession, tenant1, tenant2, user1, user2&#10;  ):&#10;      &quot;&quot;&quot;&#10;      Testa se contas criadas por user1 só são visíveis para tenant1.&#10;      &quot;&quot;&quot;&#10;      # Setup&#10;      db_session.add(tenant1)&#10;      db_session.add(tenant2)&#10;      db_session.add(user1)&#10;      db_session.add(user2)&#10;      await db_session.commit()&#10;&#10;      # User1 cria uma conta&#10;      await apply_tenant_context(db_session, tenant1.id, user1.id)&#10;&#10;      account1 = Account(&#10;          id=uuid4(),&#10;          name=&quot;Conta Bancária&quot;,&#10;          institution_name=&quot;Banco XYZ&quot;,&#10;          type=&quot;checking&quot;,&#10;          tenant_id=tenant1.id,&#10;          balance=1000,&#10;      )&#10;      db_session.add(account1)&#10;      await db_session.commit()&#10;&#10;      # Checar que user1 vê a conta&#10;      from sqlalchemy import select&#10;&#10;      result = await db_session.execute(select(Account))&#10;      accounts = result.scalars().all()&#10;      assert len(accounts) == 1&#10;&#10;      await clear_tenant_context(db_session)&#10;&#10;      # User2 não deveria ver conta de user1&#10;      await apply_tenant_context(db_session, tenant2.id, user2.id)&#10;&#10;      result = await db_session.execute(select(Account))&#10;      accounts = result.scalars().all()&#10;      # RLS deveria retornar lista vazia&#10;      assert len(accounts) == 0&#10;&#10;      await clear_tenant_context(db_session)&#10;E       fixture 'db_session' not found&#10;&gt;       available fixtures: _class_scoped_runner, _function_scoped_runner, _module_scoped_runner, _package_scoped_runner, _session_scoped_runner, anyio_backend, anyio_backend_name, anyio_backend_options, auth_client, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, client, doctest_namespace, event_loop_policy, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_account, setup_db, subtests, tenant1, tenant2, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory, user1, user2&#10;&gt;       use 'pytest --fixtures [testpath]' for help on them.&#10;&#10;C:\Users\felipedovinhoo\OneDrive\01_Projetos\02_apps\02_app_fin\backend\tests\test_rls_isolation.py:163&quot;">file C:\Users\felipedovinhoo\OneDrive\01_Projetos\02_apps\02_app_fin\backend\tests\test_rls_isolation.py, line 163
+  @pytest.mark.asyncio
+  async def test_tenant_isolation_account_creation(
+      db_session: AsyncSession, tenant1, tenant2, user1, user2
+  ):
+      """
+      Testa se contas criadas por user1 só são visíveis para tenant1.
+      """
+      # Setup
+      db_session.add(tenant1)
+      db_session.add(tenant2)
+      db_session.add(user1)
+      db_session.add(user2)
+      await db_session.commit()
+
+      # User1 cria uma conta
+      await apply_tenant_context(db_session, tenant1.id, user1.id)
+
+      account1 = Account(
+          id=uuid4(),
+          name="Conta Bancária",
+          institution_name="Banco XYZ",
+          type="checking",
+          tenant_id=tenant1.id,
+          balance=1000,
+      )
+      db_session.add(account1)
+      await db_session.commit()
+
+      # Checar que user1 vê a conta
+      from sqlalchemy import select
+
+      result = await db_session.execute(select(Account))
+      accounts = result.scalars().all()
+      assert len(accounts) == 1
+
+      await clear_tenant_context(db_session)
+
+      # User2 não deveria ver conta de user1
+      await apply_tenant_context(db_session, tenant2.id, user2.id)
+
+      result = await db_session.execute(select(Account))
+      accounts = result.scalars().all()
+      # RLS deveria retornar lista vazia
+      assert len(accounts) == 0
+
+      await clear_tenant_context(db_session)
+E       fixture 'db_session' not found
+&gt;       available fixtures: _class_scoped_runner, _function_scoped_runner, _module_scoped_runner, _package_scoped_runner, _session_scoped_runner, anyio_backend, anyio_backend_name, anyio_backend_options, auth_client, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, client, doctest_namespace, event_loop_policy, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_account, setup_db, subtests, tenant1, tenant2, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory, user1, user2
+&gt;       use 'pytest --fixtures [testpath]' for help on them.
+
+C:\Users\felipedovinhoo\OneDrive\01_Projetos\02_apps\02_app_fin\backend\tests\test_rls_isolation.py:163</error></testcase><testcase classname="tests.test_rls_isolation" name="test_missing_tenant_context_fails" time="0.019"><error message="failed on setup with &quot;file C:\Users\felipedovinhoo\OneDrive\01_Projetos\02_apps\02_app_fin\backend\tests\test_rls_isolation.py, line 211&#10;  @pytest.mark.asyncio&#10;  async def test_missing_tenant_context_fails(&#10;      db_session: AsyncSession, tenant1&#10;  ):&#10;      &quot;&quot;&quot;&#10;      Testa se operações sem tenant context falham.&#10;      &quot;&quot;&quot;&#10;      db_session.add(tenant1)&#10;      await db_session.commit()&#10;&#10;      # Tentar query sem context&#10;      from sqlalchemy import select&#10;&#10;      result = await db_session.execute(select(Category))&#10;      # Sem tenant context setado, RLS deveria retornar vazio ou erro&#10;      categories = result.scalars().all()&#10;      assert len(categories) == 0&#10;E       fixture 'db_session' not found&#10;&gt;       available fixtures: _class_scoped_runner, _function_scoped_runner, _module_scoped_runner, _package_scoped_runner, _session_scoped_runner, anyio_backend, anyio_backend_name, anyio_backend_options, auth_client, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, client, doctest_namespace, event_loop_policy, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_account, setup_db, subtests, tenant1, tenant2, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory, user1, user2&#10;&gt;       use 'pytest --fixtures [testpath]' for help on them.&#10;&#10;C:\Users\felipedovinhoo\OneDrive\01_Projetos\02_apps\02_app_fin\backend\tests\test_rls_isolation.py:211&quot;">file C:\Users\felipedovinhoo\OneDrive\01_Projetos\02_apps\02_app_fin\backend\tests\test_rls_isolation.py, line 211
+  @pytest.mark.asyncio
+  async def test_missing_tenant_context_fails(
+      db_session: AsyncSession, tenant1
+  ):
+      """
+      Testa se operações sem tenant context falham.
+      """
+      db_session.add(tenant1)
+      await db_session.commit()
+
+      # Tentar query sem context
+      from sqlalchemy import select
+
+      result = await db_session.execute(select(Category))
+      # Sem tenant context setado, RLS deveria retornar vazio ou erro
+      categories = result.scalars().all()
+      assert len(categories) == 0
+E       fixture 'db_session' not found
+&gt;       available fixtures: _class_scoped_runner, _function_scoped_runner, _module_scoped_runner, _package_scoped_runner, _session_scoped_runner, anyio_backend, anyio_backend_name, anyio_backend_options, auth_client, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, client, doctest_namespace, event_loop_policy, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, sample_account, setup_db, subtests, tenant1, tenant2, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory, user1, user2
+&gt;       use 'pytest --fixtures [testpath]' for help on them.
+
+C:\Users\felipedovinhoo\OneDrive\01_Projetos\02_apps\02_app_fin\backend\tests\test_rls_isolation.py:211</error></testcase><testcase classname="tests.test_tasks" name="test_sync_all_tenants_dispatches" time="0.023"><failure message="AttributeError: module 'app.workers' has no attribute 'tasks'">@pytest.mark.asyncio
+    async def test_sync_all_tenants_dispatches():
+        """sync_all_tenants deve despachar sync_tenant para cada tenant ativo."""
+&gt;       with patch("app.workers.tasks.sync_tenant") as mock_sync_tenant:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_tasks.py:11: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Python314\Lib\unittest\mock.py:1487: in __enter__
+    self.target = self.getter()
+                  ^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+name = 'app.workers.tasks'
+
+    def resolve_name(name):
+        """
+        Resolve a name to an object.
+    
+        It is expected that `name` will be a string in one of the following
+        formats, where W is shorthand for a valid Python identifier and dot stands
+        for a literal period in these pseudo-regexes:
+    
+        W(.W)*
+        W(.W)*:(W(.W)*)?
+    
+        The first form is intended for backward compatibility only. It assumes that
+        some part of the dotted name is a package, and the rest is an object
+        somewhere within that package, possibly nested inside other objects.
+        Because the place where the package stops and the object hierarchy starts
+        can't be inferred by inspection, repeated attempts to import must be done
+        with this form.
+    
+        In the second form, the caller makes the division point clear through the
+        provision of a single colon: the dotted name to the left of the colon is a
+        package to be imported, and the dotted name to the right is the object
+        hierarchy within that package. Only one import is needed in this form. If
+        it ends with the colon, then a module object is returned.
+    
+        The function will return an object (which might be a module), or raise one
+        of the following exceptions:
+    
+        ValueError - if `name` isn't in a recognised format
+        ImportError - if an import failed when it shouldn't have
+        AttributeError - if a failure occurred when traversing the object hierarchy
+                         within the imported package to get to the desired object.
+        """
+        global _NAME_PATTERN
+        if _NAME_PATTERN is None:
+            # Lazy import to speedup Python startup time
+            import re
+            dotted_words = r'(?!\d)(\w+)(\.(?!\d)(\w+))*'
+            _NAME_PATTERN = re.compile(f'^(?P&lt;pkg&gt;{dotted_words})'
+                                       f'(?P&lt;cln&gt;:(?P&lt;obj&gt;{dotted_words})?)?$',
+                                       re.UNICODE)
+    
+        m = _NAME_PATTERN.match(name)
+        if not m:
+            raise ValueError(f'invalid format: {name!r}')
+        gd = m.groupdict()
+        if gd.get('cln'):
+            # there is a colon - a one-step import is all that's needed
+            mod = importlib.import_module(gd['pkg'])
+            parts = gd.get('obj')
+            parts = parts.split('.') if parts else []
+        else:
+            # no colon - have to iterate to find the package boundary
+            parts = name.split('.')
+            modname = parts.pop(0)
+            # first part *must* be a module/package.
+            mod = importlib.import_module(modname)
+            while parts:
+                p = parts[0]
+                s = f'{modname}.{p}'
+                try:
+                    mod = importlib.import_module(s)
+                    parts.pop(0)
+                    modname = s
+                except ImportError:
+                    break
+        # if we reach this point, mod is the module, already imported, and
+        # parts is the list of parts in the object hierarchy to be traversed, or
+        # an empty list if just the module is wanted.
+        result = mod
+        for p in parts:
+&gt;           result = getattr(result, p)
+                     ^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'app.workers' has no attribute 'tasks'
+
+C:\Python314\Lib\pkgutil.py:473: AttributeError</failure></testcase><testcase classname="tests.test_transactions" name="test_create_transaction" time="0.218" /><testcase classname="tests.test_transactions" name="test_list_transactions" time="0.240" /><testcase classname="tests.test_transactions" name="test_list_transactions_filter_by_type" time="0.231" /><testcase classname="tests.test_transactions" name="test_list_transactions_search" time="0.229" /><testcase classname="tests.test_transactions" name="test_update_transaction" time="0.220" /><testcase classname="tests.test_transactions" name="test_delete_transaction" time="0.222" /><testcase classname="tests.test_transactions" name="test_export_csv" time="0.217" /><testcase classname="tests.test_transactions" name="test_monthly_summary" time="0.222"><failure message="AttributeError: Neither 'InstrumentedAttribute' object nor 'Comparator' object associated with Transaction.amount has an attribute 'filter'">self = Column('amount', Numeric(precision=14, scale=2), table=&lt;transactions&gt;, nullable=False)
+key = 'filter'
+
+    def __getattr__(self, key: str) -&gt; Any:
+        try:
+&gt;           return getattr(self.comparator, key)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'Comparator' object has no attribute 'filter'
+
+.venv\Lib\site-packages\sqlalchemy\sql\elements.py:1518: AttributeError
+
+The above exception was the direct cause of the following exception:
+
+self = &lt;sqlalchemy.orm.attributes.InstrumentedAttribute object at 0x00000193E4057560&gt;
+key = 'filter'
+
+    def __getattr__(self, key: str) -&gt; Any:
+        try:
+            return util.MemoizedSlots.__getattr__(self, key)
+        except AttributeError:
+            pass
+    
+        try:
+&gt;           return getattr(self.comparator, key)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.venv\Lib\site-packages\sqlalchemy\orm\attributes.py:475: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\sqlalchemy\util\langhelpers.py:1313: in __getattr__
+    return self._fallback_getattr(key)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\sqlalchemy\orm\properties.py:474: in _fallback_getattr
+    return getattr(self.__clause_element__(), key)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = Column('amount', Numeric(precision=14, scale=2), table=&lt;transactions&gt;, nullable=False)
+key = 'filter'
+
+    def __getattr__(self, key: str) -&gt; Any:
+        try:
+            return getattr(self.comparator, key)
+        except AttributeError as err:
+&gt;           raise AttributeError(
+                "Neither %r object nor %r object has an attribute %r"
+                % (
+                    type(self).__name__,
+                    type(self.comparator).__name__,
+                    key,
+                )
+            ) from err
+E           AttributeError: Neither 'AnnotatedColumn' object nor 'Comparator' object has an attribute 'filter'
+
+.venv\Lib\site-packages\sqlalchemy\sql\elements.py:1520: AttributeError
+
+The above exception was the direct cause of the following exception:
+
+auth_client = {'client': &lt;httpx.AsyncClient object at 0x00000193E5BE5010&gt;, 'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOi...HAiOjE3NzM3MTQwMTksInR5cGUiOiJhY2Nlc3MiLCJlbWFpbCI6ImRldkB2aXNvci5hcHAifQ.6-be_47_UkAo33cVQo-zha8eicbh89OR1jebY65Ysjk'}
+sample_account = {'balance': '1500.00', 'created_at': '2026-03-17T01:20:19', 'credit_limit': None, 'id': '155d3242-1a05-4ec8-bf00-3295a1b63b6e', ...}
+
+    @pytest.mark.asyncio
+    async def test_monthly_summary(auth_client: dict, sample_account: dict):
+        client: AsyncClient = auth_client["client"]
+        now = datetime.now(timezone.utc)
+    
+        # Receita
+        await client.post("/api/v1/transactions/", json={
+            **_tx_payload(sample_account["id"], amount="5000.00"),
+            "type": "credit",
+            "description": "Salário",
+        })
+        # Despesa
+        await client.post("/api/v1/transactions/", json=_tx_payload(
+            sample_account["id"], amount="-500.00"
+        ))
+    
+&gt;       res = await client.get(f"/api/v1/transactions/summary?year={now.year}&amp;month={now.month}")
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_transactions.py:125: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\httpx\_client.py:1768: in get
+    return await self.request(
+.venv\Lib\site-packages\httpx\_client.py:1540: in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_client.py:1629: in send
+    response = await self._send_handling_auth(
+.venv\Lib\site-packages\httpx\_client.py:1657: in _send_handling_auth
+    response = await self._send_handling_redirects(
+.venv\Lib\site-packages\httpx\_client.py:1694: in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_client.py:1730: in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_transports\asgi.py:170: in handle_async_request
+    await self.app(scope, receive, send)
+.venv\Lib\site-packages\fastapi\applications.py:1160: in __call__
+    await super().__call__(scope, receive, send)
+.venv\Lib\site-packages\starlette\applications.py:107: in __call__
+    await self.middleware_stack(scope, receive, send)
+.venv\Lib\site-packages\starlette\middleware\errors.py:186: in __call__
+    raise exc
+.venv\Lib\site-packages\starlette\middleware\errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+.venv\Lib\site-packages\starlette\middleware\base.py:191: in __call__
+    with recv_stream, send_stream, collapse_excgroups():
+                                   ^^^^^^^^^^^^^^^^^^^^
+C:\Python314\Lib\contextlib.py:162: in __exit__
+    self.gen.throw(value)
+.venv\Lib\site-packages\starlette\_utils.py:87: in collapse_excgroups
+    raise exc
+.venv\Lib\site-packages\starlette\middleware\base.py:193: in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app\core\tenant_middleware.py:72: in dispatch
+    return await call_next(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\starlette\middleware\base.py:168: in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+.venv\Lib\site-packages\starlette\middleware\base.py:144: in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+.venv\Lib\site-packages\starlette\middleware\cors.py:87: in __call__
+    await self.app(scope, receive, send)
+.venv\Lib\site-packages\starlette\middleware\exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+.venv\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+.venv\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+.venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+.venv\Lib\site-packages\starlette\routing.py:716: in __call__
+    await self.middleware_stack(scope, receive, send)
+.venv\Lib\site-packages\starlette\routing.py:736: in app
+    await route.handle(scope, receive, send)
+.venv\Lib\site-packages\starlette\routing.py:290: in handle
+    await self.app(scope, receive, send)
+.venv\Lib\site-packages\fastapi\routing.py:130: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+.venv\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+.venv\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+.venv\Lib\site-packages\fastapi\routing.py:116: in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\fastapi\routing.py:670: in app
+    raw_response = await run_endpoint_function(
+.venv\Lib\site-packages\fastapi\routing.py:324: in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app\api\v1\transactions.py:65: in monthly_summary
+    return await transaction_service.get_monthly_summary(current_user.tenant_id, db, year, month)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app\services\transaction_service.py:115: in get_monthly_summary
+    Transaction.amount.filter(Transaction.amount &gt; 0)  # type: ignore[attr-defined]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;sqlalchemy.orm.attributes.InstrumentedAttribute object at 0x00000193E4057560&gt;
+key = 'filter'
+
+    def __getattr__(self, key: str) -&gt; Any:
+        try:
+            return util.MemoizedSlots.__getattr__(self, key)
+        except AttributeError:
+            pass
+    
+        try:
+            return getattr(self.comparator, key)
+        except AttributeError as err:
+&gt;           raise AttributeError(
+                "Neither %r object nor %r object associated with %s "
+                "has an attribute %r"
+                % (
+                    type(self).__name__,
+                    type(self.comparator).__name__,
+                    self,
+                    key,
+                )
+            ) from err
+E           AttributeError: Neither 'InstrumentedAttribute' object nor 'Comparator' object associated with Transaction.amount has an attribute 'filter'
+
+.venv\Lib\site-packages\sqlalchemy\orm\attributes.py:477: AttributeError</failure></testcase><testcase classname="tests.test_transactions" name="test_transaction_tenant_isolation" time="0.778" /><testcase classname="tests.test_webhooks" name="test_pluggy_webhook_item_updated" time="0.151" /><testcase classname="tests.test_webhooks" name="test_pluggy_webhook_transactions_created" time="0.034" /><testcase classname="tests.test_webhooks" name="test_pluggy_webhook_unknown_event" time="0.026" /><testcase classname="tests.test_webhooks" name="test_pluggy_webhook_item_error" time="0.030" /></testsuite></testsuites>
