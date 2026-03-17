@@ -41,12 +41,16 @@ class Settings(BaseSettings):
     EMAIL_FROM: str = "noreply@visor.app"
 
     # CORS
-    CORS_ORIGINS: str = "http://localhost:3000"
+    CORS_ORIGINS: str | list[str] = ["http://localhost:3000"]
 
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
-    def parse_cors(cls, v: str) -> list[str]:
-        return [origin.strip() for origin in v.split(",")]
+    def parse_cors(cls, v: str | list[str]) -> list[str]:
+        if isinstance(v, str) and not v.startswith("["):
+            return [origin.strip() for origin in v.split(",") if origin.strip()]
+        elif isinstance(v, list):
+            return v
+        return v
 
     @property
     def is_production(self) -> bool:

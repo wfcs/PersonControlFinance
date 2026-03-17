@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 
 from app.api.v1.router import api_router
 from app.core.config import settings
+from app.core.tenant_middleware import TenantContextMiddleware
 from app.db.session import engine, Base
 from app.integrations.pluggy_client import pluggy_client
 
@@ -40,6 +41,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ── Tenant Context Middleware ────────────────────────────────────────────────
+# Deve vir depois do CORS, injeta tenant_id em toda request
+app.add_middleware(TenantContextMiddleware)
 
 # ── Routers ──────────────────────────────────────────────────────────────────
 app.include_router(api_router)

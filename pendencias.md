@@ -49,20 +49,31 @@
 ---
 
 ### 3. **Segurança Multi-tenant**
-- **Status:** ⚠️ Parcialmente implementado
+- **Status:** ✅ IMPLEMENTADO
 - **Impacto:** Alto
-- **Descrição:** tenant_id está nos modelos mas Row-Level Security (RLS) não foi aplicado
+- **Descrição:** RLS (Row-Level Security) completamente implementado no PostgreSQL com isolamento automático
 - **Arquivos envolvidos:**
-  - `backend/app/models/base.py` - TenantMixin criado
-  - `backend/app/core/deps.py` - Dependência de tenant
-  - Migrations do PostgreSQL
-- **O que falta:**
-  - ✗ RLS policies no PostgreSQL
-  - ✗ Validação de isolamento em testes
-  - ✗ Middleware que injeta tenant_id em TODA request
-  - ✗ Bloqueio de acesso cross-tenant
-  - ✗ Row-level filtering automático
-- **Prioridade:** 🔴 ALTA
+  - `backend/app/models/base.py` - ✅ TenantMixin criado
+  - `backend/app/core/deps.py` - ✅ Dependência de tenant
+  - `backend/app/core/tenant_context.py` - ✅ NEW: Context variables e helpers
+  - `backend/app/core/tenant_middleware.py` - ✅ NEW: Middleware de contexto
+  - `backend/app/core/tenant_decorators.py` - ✅ NEW: Decorators de validação
+  - `backend/migrations/versions/0003_rls_policies.py` - ✅ NEW: Migração RLS
+  - `backend/tests/test_rls_isolation.py` - ✅ NEW: Testes de isolamento
+  - `backend/MULTITENANT_RLS.md` - ✅ NEW: Documentação completa
+  - `backend/SETP_MULTITENANT_EXAMPLE.py` - ✅ NEW: Exemplos de implementação
+- **O que foi implementado:**
+  - ✅ RLS policies no PostgreSQL (SELECT, INSERT, UPDATE, DELETE)
+  - ✅ Função PostgreSQL: get_current_tenant_id()
+  - ✅ Context variables Python por request
+  - ✅ Middleware TenantContextMiddleware automático
+  - ✅ Decorators: @require_tenant_context e @validate_tenant_access
+  - ✅ Helper: apply_tenant_context() injeta tenant_id em toda request
+  - ✅ Testes validando isolamento cross-tenant
+  - ✅ Bloqueio de acesso cross-tenant em banco/aplicação
+  - ✅ Row-level filtering automático via RLS
+  - ✅ Documentação com troubleshooting e boas práticas
+- **Prioridade:** 🔴 ALTA → ✅ COMPLETO
 
 ---
 
@@ -236,14 +247,14 @@
 
 ## 📊 Resumo por Prioridade
 
-### 🔴 ALTA (6 itens)
+### 🔴 ALTA (5 itens)
 1. Testes de Integração dos Endpoints
-3. Segurança Multi-tenant (RLS)
 4. Middleware de Autenticação
 7. Integração Stripe (Billing)
 
-### ✅ COMPLETO (2 itens)
+### ✅ COMPLETO (3 itens)
 2. Frontend Desconectado da API
+3. Segurança Multi-tenant (RLS)
 10. Frontend - Páginas Funcionais
 
 ### 🟡 MÉDIA (5 itens)
