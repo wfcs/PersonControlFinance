@@ -1,0 +1,40 @@
+ImportError while loading conftest 'C:\Users\felipedovinhoo\OneDrive\01_Projetos\02_apps\02_app_fin\backend\tests\conftest.py'.
+tests\conftest.py:10: in <module>
+    from app.main import app
+app\main.py:8: in <module>
+    from app.api.v1.router import api_router
+app\api\v1\router.py:3: in <module>
+    from app.api.v1 import (
+app\api\v1\auth.py:3: in <module>
+    from app.core.deps import AuthUser, DBSession
+app\core\deps.py:8: in <module>
+    from app.core.security import decode_token
+app\core\security.py:8: in <module>
+    from app.core.config import settings
+app\core\config.py:56: in <module>
+    settings = Settings()  # type: ignore[call-arg]
+               ^^^^^^^^^^
+.venv\Lib\site-packages\pydantic_settings\main.py:242: in __init__
+    super().__init__(**__pydantic_self__.__class__._settings_build_values(sources, init_kwargs))
+E   pydantic_core._pydantic_core.ValidationError: 7 validation errors for Settings
+E   SECRET_KEY
+E     Field required [type=missing, input_value={}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.12/v/missing
+E   DATABASE_URL
+E     Field required [type=missing, input_value={}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.12/v/missing
+E   DATABASE_URL_SYNC
+E     Field required [type=missing, input_value={}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.12/v/missing
+E   SUPABASE_URL
+E     Field required [type=missing, input_value={}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.12/v/missing
+E   SUPABASE_ANON_KEY
+E     Field required [type=missing, input_value={}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.12/v/missing
+E   SUPABASE_SERVICE_ROLE_KEY
+E     Field required [type=missing, input_value={}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.12/v/missing
+E   CORS_ORIGINS
+E     Input should be a valid string [type=string_type, input_value=['http://localhost:3000'], input_type=list]
+E       For further information visit https://errors.pydantic.dev/2.12/v/string_type
