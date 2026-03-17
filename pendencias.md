@@ -26,20 +26,25 @@
 ---
 
 ### 2. **Frontend Desconectado da API**
-- **Status:** ❌ Não conectado
+- **Status:** ✅ IMPLEMENTADO
 - **Impacto:** Alto
-- **Descrição:** Componentes e hooks criados mas sem chamadas HTTP reais à API
+- **Descrição:** Componentes e hooks agora estão completamente conectados à API
 - **Arquivos envolvidos:**
-  - `frontend/src/lib/api.ts` - Axios instance incompleto
-  - `frontend/src/hooks/*.ts` - Hooks sem chamadas HTTP
-  - `frontend/src/stores/auth-store.ts` - Store desconectado
-- **O que falta:**
-  - ✗ Implementação de endpoints no `api.ts`
-  - ✗ React Query integration real
-  - ✗ Tratamento de erros HTTP
-  - ✗ Auth token nos headers
-  - ✗ Refresh token flow
-- **Prioridade:** 🔴 ALTA
+  - `frontend/src/lib/api.ts` - ✅ Axios instance com interceptadores
+  - `frontend/src/lib/auth.ts` - ✅ Métodos de autenticação
+  - `frontend/src/hooks/*.ts` - ✅ Todos os hooks com chamadas HTTP
+  - `frontend/src/stores/auth-store.ts` - ✅ Store Zustand completo
+  - `frontend/.env.example` - ✅ Documentação de variáveis
+- **O que foi implementado:**
+  - ✅ Endpoints configurados no `api.ts` com interceptadores
+  - ✅ React Query hooks para autenticação, contas, transações, categorias, etc
+  - ✅ Tratamento de erros HTTP com fallback
+  - ✅ Auth token nos headers automaticamente
+  - ✅ Refresh token flow com retry queue
+  - ✅ Hooks adicionais: use-categories, use-patrimony, use-projections, use-recurrences, use-bills, use-open-finance
+  - ✅ Documentação completa em HOOKS_DOCUMENTATION.md
+  - ✅ Logout com invalidação de cache
+- **Prioridade:** 🔴 ALTA → ✅ COMPLETO
 
 ---
 

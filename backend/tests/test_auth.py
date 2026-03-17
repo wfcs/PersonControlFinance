@@ -1,42 +1,8 @@
 import pytest
-from httpx import AsyncClient, ASGITransport
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from httpx import AsyncClient
 
-from app.main import app
-from app.db.session import Base, get_session
+# As fixtures `client` e `setup_db` vêm automaticamente do `conftest.py`
 
-TEST_DB_URL = "sqlite+aiosqlite:///:memory:"
-
-engine_test = create_async_engine(TEST_DB_URL, echo=False)
-TestSessionLocal = async_sessionmaker(bind=engine_test, expire_on_commit=False, autoflush=False)
-
-
-async def override_get_session():
-    async with TestSessionLocal() as session:
-        try:
-            yield session
-            await session.commit()
-        except Exception:
-            await session.rollback()
-            raise
-
-
-app.dependency_overrides[get_session] = override_get_session
-
-
-@pytest.fixture(autouse=True)
-async def setup_db():
-    async with engine_test.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    yield
-    async with engine_test.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-
-
-@pytest.fixture
-async def client():
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
-        yield c
 
 
 @pytest.mark.asyncio
