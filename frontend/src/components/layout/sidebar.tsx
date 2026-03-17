@@ -45,24 +45,24 @@ export function Sidebar() {
     return (
         <aside
             className={cn(
-                "hidden md:flex flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border transition-all duration-300 ease-in-out",
+                "hidden md:flex flex-col bg-gradient-to-b from-sidebar to-sidebar/95 text-sidebar-foreground border-r border-sidebar-border transition-all duration-300 ease-in-out",
                 collapsed ? "w-[68px]" : "w-[240px]"
             )}
         >
             {/* Logo */}
-            <div className="flex items-center gap-2.5 px-4 h-16 border-b border-sidebar-border shrink-0">
-                <div className="w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center text-sidebar-primary-foreground font-bold text-sm shrink-0">
-                    V
+            <div className="flex items-center gap-2.5 px-4 h-16 border-b border-sidebar-border/50 shrink-0 hover-lift">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-sidebar-primary to-sidebar-primary/80 flex items-center justify-center text-sidebar-primary-foreground font-bold text-sm shrink-0 transition-transform hover:scale-110">
+                    F
                 </div>
                 {!collapsed && (
-                    <span className="text-lg font-semibold tracking-tight text-sidebar-foreground">
-                        Visor
+                    <span className="text-lg font-bold tracking-tight bg-gradient-to-r from-sidebar-foreground to-sidebar-foreground/80 bg-clip-text text-transparent">
+                        FinControl
                     </span>
                 )}
             </div>
 
             {/* Nav */}
-            <nav className="flex-1 py-3 px-2 space-y-0.5 overflow-y-auto">
+            <nav className="flex-1 py-4 px-2 space-y-1 overflow-y-auto scrollbar-thin scrollbar-track-sidebar scrollbar-thumb-sidebar-accent/30 hover:scrollbar-thumb-sidebar-accent/50">
                 {navItems.map((item) => {
                     const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
                     const Icon = item.icon;
@@ -74,10 +74,10 @@ export function Sidebar() {
                             aria-disabled={item.disabled}
                             title={collapsed ? item.label : undefined}
                             className={cn(
-                                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 relative group",
                                 isActive
-                                    ? "bg-sidebar-accent text-sidebar-primary"
-                                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground",
+                                    ? "bg-sidebar-accent/80 text-sidebar-primary font-semibold shadow-sm"
+                                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground",
                                 item.disabled && "opacity-40 pointer-events-none cursor-default",
                                 collapsed && "justify-center px-2"
                             )}

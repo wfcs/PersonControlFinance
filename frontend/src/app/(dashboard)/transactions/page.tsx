@@ -121,15 +121,21 @@ export default function TransactionsPage() {
     const totalPages = Math.ceil((data?.total ?? 0) / (filters.page_size ?? 20));
 
     return (
-        <div className="space-y-4 max-w-7xl mx-auto">
+        <div className="space-y-6 max-w-7xl mx-auto">
+            {/* Header */}
+            <div className="animate-fade-in-scale">
+                <h1 className="text-3xl font-bold mb-1">Transações</h1>
+                <p className="text-muted-foreground">Gerencie e acompanhe todas as suas transações financeiras</p>
+            </div>
+
             {/* Toolbar */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 bg-card/50 rounded-lg border border-border/50 backdrop-blur-sm hover:bg-card/70 transition-colors">
                 <div className="flex items-center gap-2 flex-1 w-full sm:w-auto">
                     <div className="relative flex-1 max-w-sm">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
                             placeholder="Buscar transação..."
-                            className="pl-9"
+                            className="pl-9 h-10 rounded-lg border-border/50 focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
                             value={search}
                             onChange={(e) => {
                                 setSearch(e.target.value);
@@ -144,7 +150,7 @@ export default function TransactionsPage() {
                             setFilters((f) => ({ ...f, page: 1 }));
                         }}
                     >
-                        <SelectTrigger className="w-[140px]">
+                        <SelectTrigger className="w-[140px] h-10 rounded-lg border-border/50 focus:border-primary/50 focus:ring-1 focus:ring-primary/20">
                             <SelectValue placeholder="Tipo" />
                         </SelectTrigger>
                         <SelectContent>
@@ -158,25 +164,30 @@ export default function TransactionsPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={handleExportCSV}>
+                    <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={handleExportCSV}
+                        className="rounded-lg border-border/50 hover:bg-accent transition-colors"
+                    >
                         <Download className="h-4 w-4 mr-1.5" />
                         CSV
                     </Button>
                     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                         {/* @ts-expect-error asChild Radix compatibility */}
                         <DialogTrigger asChild>
-                            <Button size="sm">
+                            <Button size="sm" className="bg-gradient-to-r from-primary to-primary/90 hover:shadow-lg hover:shadow-primary/20 transition-all rounded-lg">
                                 <Plus className="h-4 w-4 mr-1.5" />
                                 Nova transação
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="sm:max-w-[480px]">
+                        <DialogContent className="sm:max-w-[480px] rounded-xl">
                             <DialogHeader>
-                                <DialogTitle>Nova Transação</DialogTitle>
+                                <DialogTitle className="text-xl font-bold">Nova Transação</DialogTitle>
                             </DialogHeader>
-                            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-2">
+                            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">
                                 <div className="space-y-2">
-                                    <Label>Descrição</Label>
+                                    <Label htmlFor="description" className="text-sm font-semibold">Descrição</Label>
                                     <Input placeholder="Ex: Supermercado" {...register("description")} />
                                     {errors.description && (
                                         <p className="text-destructive text-xs">{errors.description.message}</p>

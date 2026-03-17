@@ -54,46 +54,46 @@ export default function LoginPage() {
     return (
         <>
             {/* Mobile-only brand (hidden on lg+ where left panel shows) */}
-            <div className="flex items-center gap-3 mb-8 lg:hidden">
-                <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-bold text-lg">
+            <div className="flex items-center gap-3 mb-8 lg:hidden animate-fade-in-scale">
+                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-primary-foreground font-bold text-lg shadow-lg">
                     F
                 </div>
-                <span className="text-xl font-semibold tracking-tight">
+                <span className="text-2xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
                     FinControl
                 </span>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-6 animate-slide-in-top">
                 <div className="space-y-2">
-                    <h1 className="text-2xl font-bold tracking-tight">
+                    <h1 className="text-3xl font-bold tracking-tight">
                         Bem-vindo de volta
                     </h1>
-                    <p className="text-muted-foreground text-sm">
-                        Entre na sua conta para acessar o dashboard
+                    <p className="text-muted-foreground">
+                        Entre com suas credenciais de acesso
                     </p>
                 </div>
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                     {error && (
-                        <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 text-destructive text-sm px-4 py-2.5 font-medium">
+                        <div className="flex items-center gap-3 rounded-lg border border-destructive/30 bg-gradient-to-r from-destructive/10 to-destructive/5 text-destructive text-sm px-4 py-3 font-medium animate-slide-in-top">
                             <AlertCircle className="h-4 w-4 shrink-0" />
                             {error}
                         </div>
                     )}
 
                     <div className="space-y-2">
-                        <Label htmlFor="email">E-mail</Label>
+                        <Label htmlFor="email" className="text-sm font-semibold">E-mail</Label>
                         <Input
                             id="email"
                             type="email"
                             placeholder="seu@email.com"
                             autoComplete="email"
                             autoFocus
-                            className="h-11"
+                            className="h-11 rounded-lg border-border/50 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all"
                             {...register("email")}
                         />
                         {errors.email && (
-                            <p className="text-destructive text-xs">
+                            <p className="text-destructive text-xs font-medium">
                                 {errors.email.message}
                             </p>
                         )}
@@ -101,12 +101,12 @@ export default function LoginPage() {
 
                     <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                            <Label htmlFor="password">Senha</Label>
+                            <Label htmlFor="password" className="text-sm font-semibold">Senha</Label>
                             <button
                                 type="button"
-                                className="text-xs text-primary hover:underline"
+                                className="text-xs font-medium text-primary hover:opacity-80 transition-opacity"
                             >
-                                Esqueceu a senha?
+                                Esqueceu?
                             </button>
                         </div>
                         <div className="relative">
@@ -115,13 +115,13 @@ export default function LoginPage() {
                                 type={showPassword ? "text" : "password"}
                                 placeholder="••••••"
                                 autoComplete="current-password"
-                                className="h-11 pr-11"
+                                className="h-11 pr-11 rounded-lg border-border/50 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all"
                                 {...register("password")}
                             />
                             <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
-                                className="absolute inset-y-0 right-0 flex items-center justify-center w-11 text-muted-foreground hover:text-foreground transition-colors"
+                                className="absolute inset-y-0 right-0 flex items-center justify-center w-11 text-muted-foreground hover:text-foreground transition-colors duration-200"
                                 tabIndex={-1}
                             >
                                 {showPassword ? (
@@ -132,7 +132,7 @@ export default function LoginPage() {
                             </button>
                         </div>
                         {errors.password && (
-                            <p className="text-destructive text-xs">
+                            <p className="text-destructive text-xs font-medium">
                                 {errors.password.message}
                             </p>
                         )}
@@ -140,14 +140,14 @@ export default function LoginPage() {
 
                     <Button
                         type="submit"
-                        className="w-full h-11"
+                        className="w-full h-11 bg-gradient-to-r from-primary to-primary/90 hover:shadow-lg hover:shadow-primary/20 transition-all rounded-lg font-semibold"
                         disabled={isSubmitting}
                     >
                         {isSubmitting ? (
                             <Loader2 className="h-4 w-4 animate-spin mr-2" />
                         ) : null}
-                        Entrar
-                        {!isSubmitting && (
+                        {isSubmitting ? "Entrando..." : "Entrar"}
+                    </Button>
                             <ArrowRight className="h-4 w-4 ml-2" />
                         )}
                     </Button>

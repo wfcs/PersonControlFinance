@@ -134,3 +134,258 @@
     @apply font-sans scroll-smooth;
   }
 }
+
+/* ─── Animações modernas ─────────────────────────────────────────────────────────*/
+
+@keyframes slideInFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInFromTop {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInFromBottom {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes shimmer {
+  0%, 100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.05);
+  }
+}
+
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(96, 165, 250, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(96, 165, 250, 0);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes pulse-subtle {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+/* Animações de utilidade */
+.animate-slide-in-left {
+  animation: slideInFromLeft 0.35s ease-out;
+}
+
+.animate-slide-in-right {
+  animation: slideInFromRight 0.35s ease-out;
+}
+
+.animate-slide-in-top {
+  animation: slideInFromTop 0.35s ease-out;
+}
+
+.animate-slide-in-bottom {
+  animation: slideInFromBottom 0.35s ease-out;
+}
+
+.animate-fade-in-scale {
+  animation: fadeInScale 0.3s ease-out;
+}
+
+.animate-glow {
+  animation: glow 2s infinite;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s ease-in-out infinite;
+}
+
+/* ─── Transições suaves ───────────────────────────────────────────────────────────*/
+
+.transition-smooth {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.transition-fast {
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.transition-slow {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ─── Efeitos de hover modernos ───────────────────────────────────────────────────*/
+
+.hover-lift {
+  @apply transition-smooth;
+}
+
+.hover-lift:hover {
+  @apply -translate-y-1 shadow-lg;
+}
+
+.hover-glow {
+  @apply transition-smooth;
+}
+
+.hover-glow:hover {
+  box-shadow: 0 0 20px rgba(96, 165, 250, 0.3);
+}
+
+.hover-scale {
+  @apply transition-smooth;
+}
+
+.hover-scale:hover {
+  @apply scale-105;
+}
+
+/* ─── Glassmorphism ──────────────────────────────────────────────────────────────*/
+
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.glass-dark {
+  background: rgba(20, 20, 40, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* ─── Gradientes modernos ────────────────────────────────────────────────────────*/
+
+.gradient-primary {
+  background: linear-gradient(135deg, oklch(0.50 0.16 260) 0%, oklch(0.60 0.17 160) 100%);
+}
+
+.gradient-warm {
+  background: linear-gradient(135deg, oklch(0.70 0.12 200) 0%, oklch(0.65 0.16 45) 100%);
+}
+
+.gradient-cool {
+  background: linear-gradient(135deg, oklch(0.55 0.18 250) 0%, oklch(0.50 0.16 260) 100%);
+}
+
+/* ─── Skeleton loading melhorado ────────────────────────────────────────────────*/
+
+.skeleton {
+  animation: shimmer 2s infinite;
+  background: linear-gradient(
+    90deg,
+    var(--muted) 0%,
+    var(--muted) 20%,
+    var(--muted) 40%,
+    var(--muted) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* ─── Cards com sombra moderna ──────────────────────────────────────────────────*/
+
+.card-modern {
+  @apply rounded-xl border border-border/50 shadow-sm hover-lift;
+  background: linear-gradient(135deg, var(--card) 0%, rgba(96, 165, 250, 0.02) 100%);
+}
+
+/* ─── Botões com efeito ─────────────────────────────────────────────────────────*/
+
+.btn-glow {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-glow::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s;
+}
+
+.btn-glow:hover::before {
+  left: 100%;
+}
+
+/* ─── Focus states acessíveis ──────────────────────────────────────────────────*/
+
+.focus-ring {
+  @apply outline-2 outline-ring outline-offset-2;
+}
+
+/* ─── Text gradients ──────────────────────────────────────────────────────────*/
+
+.text-gradient {
+  background: linear-gradient(135deg, oklch(0.50 0.16 260), oklch(0.60 0.17 160));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}

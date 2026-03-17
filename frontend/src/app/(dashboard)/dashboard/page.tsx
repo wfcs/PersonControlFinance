@@ -60,36 +60,37 @@ export default function DashboardPage() {
     return (
         <div className="space-y-6 max-w-7xl mx-auto">
             {/* Summary Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 animate-fade-in-scale">
                 <SummaryCard
                     title="Receita"
                     value={income}
-                    icon={<TrendingUp className="h-4 w-4" />}
+                    icon={<TrendingUp className="h-5 w-5" />}
                     trend="income"
                     loading={summaryLoading}
                 />
                 <SummaryCard
                     title="Gastos"
                     value={expense}
-                    icon={<TrendingDown className="h-4 w-4" />}
+                    icon={<TrendingDown className="h-5 w-5" />}
                     trend="expense"
                     loading={summaryLoading}
                 />
                 <SummaryCard
                     title="Resultado"
                     value={balance}
-                    icon={<DollarSign className="h-4 w-4" />}
+                    icon={<DollarSign className="h-5 w-5" />}
                     trend={balance >= 0 ? "income" : "expense"}
                     loading={summaryLoading}
                 />
             </div>
 
             {/* Charts Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 animate-slide-in-bottom">
                 {/* Cash Flow Chart */}
-                <Card className="lg:col-span-2">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">
+                <Card className="lg:col-span-2 card-modern">
+                    <CardHeader className="pb-3">
+                        <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2">
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                             Fluxo de Caixa
                         </CardTitle>
                     </CardHeader>
@@ -151,9 +152,10 @@ export default function DashboardPage() {
                 </Card>
 
                 {/* Category Spending */}
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">
+                <Card className="card-modern">
+                    <CardHeader className="pb-3">
+                        <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2">
+                            <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
                             Gastos por Categoria
                         </CardTitle>
                     </CardHeader>
@@ -200,9 +202,10 @@ export default function DashboardPage() {
             </div>
 
             {/* Recent Transactions */}
-            <Card>
-                <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
+            <Card className="card-modern animate-slide-in-top">
+                <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2">
+                        <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
                         Transações Recentes
                     </CardTitle>
                 </CardHeader>
@@ -280,25 +283,34 @@ function SummaryCard({
     loading: boolean;
 }) {
     return (
-        <Card>
-            <CardContent className="pt-5">
-                <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-muted-foreground">{title}</span>
+        <Card className="card-modern relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-transparent group-hover:from-blue-500/5 transition-all duration-500" />
+            <CardContent className="pt-5 relative z-10">
+                <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        {title}
+                    </span>
                     <div
-                        className={`p-1.5 rounded-md ${trend === "income"
-                            ? "bg-emerald-50 text-emerald-600"
-                            : "bg-destructive/10 text-destructive"
-                            }`}
+                        className={`p-2 rounded-lg transition-all duration-300 ${
+                            trend === "income"
+                                ? "bg-gradient-to-br from-emerald-50 to-emerald-100 text-emerald-600 group-hover:shadow-lg group-hover:shadow-emerald-200"
+                                : "bg-gradient-to-br from-destructive/10 to-destructive/20 text-destructive group-hover:shadow-lg group-hover:shadow-destructive/20"
+                        }`}
                     >
                         {icon}
                     </div>
                 </div>
                 {loading ? (
-                    <Skeleton className="h-7 w-32" />
+                    <Skeleton className="h-8 w-40 rounded-lg" />
                 ) : (
-                    <p className="text-2xl font-bold tabular-nums">
-                        {formatCurrency(Math.abs(value))}
-                    </p>
+                    <div className="space-y-1">
+                        <p className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                            {formatCurrency(Math.abs(value))}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                            {trend === "income" ? "✓ Receitas do mês" : "→ Despesas do período"}
+                        </p>
+                    </div>
                 )}
             </CardContent>
         </Card>
