@@ -1,48 +1,44 @@
+"""Transaction model."""
+
 import uuid
-from datetime import datetime
+from datetime import date
 from decimal import Decimal
 
-from sqlalchemy import DateTime, ForeignKey, Numeric, String, Text
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Boolean, Date, ForeignKey, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.db.session import Base
-from app.models.base import TenantMixin, TimestampMixin
+from app.models.base import Base
 
 
-class Transaction(Base, TenantMixin, TimestampMixin):
+class Transaction(Base):
     __tablename__ = "transactions"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    account_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("accounts.id", ondelete="CASCADE"), nullable=False, index=True
+    description: Mapped[str] = mapped_column(String(500), nullable=False)
+    amount: Mapped[Decimal] = mapped_column(
+        Numeric(precision=18, scale=2), nullable=False
     )
-    category_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("categories.id", ondelete="SET NULL"), nullable=True, index=True
-    )
-
-    description: Mapped[str] = mapped_column(String(256), nullable=False)
-    amount: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
-    # positivo = receita, negativo = despesa
-    type: Mapped[str] = mapped_column(String(20), nullable=False)
-    # debit | credit | transfer | pix
-
-    date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+    type: Mapped[str] = mapped_column(
+        String(20), nullable=False
+    )  # income / expense
+    date: Mapped[date] = mapped_column(Date, nullable=False)
+    is_recurring: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    # Open Finance
-    external_id: Mapped[str | None] = mapped_column(String(120), nullable=True, unique=True, index=True)
-
-    # Recorrências / parcelas
-    recurrence_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("recurrences.id", ondelete="SET NULL"), nullable=True
+    # ── FKs ──────────────────────────────────────────────────
+    account_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("accounts.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    installment_number: Mapped[int | None] = mapped_column(nullable=True)
-    installment_total: Mapped[int | None] = mapped_column(nullable=True)
+    account: Mapped["Account"] = relationship(back_populates="transactions")  # noqa: F821
 
-    is_excluded: Mapped[bool] = mapped_column(nullable=False, default=False)
+    category_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("categories.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    category: Mapped["Category | None"] = relationship(back_populates="transactions")  # noqa: F821
 
-    account: Mapped["Account"] = relationship(back_populates="transactions")
-    category: Mapped["Category | None"] = relationship(back_populates="transactions")
-    recurrence: Mapped["Recurrence | None"] = relationship(back_populates="transactions")
-    tenant: Mapped["Tenant"] = relationship(back_populates="transactions")
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    tenant: Mapped["Tenant"] = relationship(back_populates="transactions")  # noqa: F821
+
+    def __repr__(self) -> str:
+        return f"<Transaction {self.description} {self.amount}>"

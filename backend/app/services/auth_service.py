@@ -1,6 +1,9 @@
-from uuid import UUID
+"""Business logic for authentication: register, login, refresh."""
+
+import re
 
 from fastapi import HTTPException, status
+from jose import JWTError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,79 +16,104 @@ from app.core.security import (
 )
 from app.models.tenant import Tenant
 from app.models.user import User
-from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse
+from app.schemas.auth import RegisterRequest, TokenResponse
 
 
-async def register(data: RegisterRequest, db: AsyncSession) -> TokenResponse:
-    # Verifica e-mail duplicado
-    existing = await db.scalar(select(User).where(User.email == data.email))
-    if existing:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="E-mail já cadastrado")
+def _slugify(text: str) -> str:
+    """Turn a tenant name into a URL-safe slug."""
+    slug = text.lower().strip()
+    slug = re.sub(r"[^\w\s-]", "", slug)
+    slug = re.sub(r"[\s_]+", "-", slug)
+    return re.sub(r"-+", "-", slug).strip("-")
 
-    # Cria tenant individual para o usuário
-    tenant = Tenant(name=data.full_name or data.email.split("@")[0])
+
+async def register_user(payload: RegisterRequest, db: AsyncSession) -> TokenResponse:
+    """Create a new tenant and its first user, returning JWT tokens."""
+    # Check for existing email
+    existing = await db.execute(select(User).where(User.email == payload.email))
+    if existing.scalar_one_or_none() is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Email already registered",
+        )
+
+    # Create tenant
+    slug = _slugify(payload.tenant_name)
+    # Ensure slug uniqueness by appending a short random suffix if needed
+    slug_check = await db.execute(select(Tenant).where(Tenant.slug == slug))
+    if slug_check.scalar_one_or_none() is not None:
+        import uuid
+        slug = f"{slug}-{uuid.uuid4().hex[:6]}"
+
+    tenant = Tenant(name=payload.tenant_name, slug=slug)
     db.add(tenant)
-    await db.flush()  # garante tenant.id antes de criar o user
+    await db.flush()  # populate tenant.id
 
+    # Create user
     user = User(
-        email=data.email,
-        hashed_password=hash_password(data.password),
-        full_name=data.full_name,
+        email=payload.email,
+        hashed_password=hash_password(payload.password),
+        full_name=payload.full_name,
         tenant_id=tenant.id,
     )
     db.add(user)
-    await db.flush()
+    await db.commit()
+    await db.refresh(user)
 
-    # Envia e-mail de boas-vindas em background (Celery)
-    import logging
-    import os
-
-    if os.getenv("TESTING") != "1":
-        try:
-            from app.workers.tasks import send_welcome_email
-
-            send_welcome_email.delay(data.email, data.full_name)
-        except Exception:
-            logging.getLogger(__name__).debug("Celery unavailable, skipping welcome email")
-
-    return _build_tokens(user.id, tenant.id, user.email)
+    return TokenResponse(
+        access_token=create_access_token(user.id, tenant.id),
+        refresh_token=create_refresh_token(user.id, tenant.id),
+    )
 
 
-async def login(data: LoginRequest, db: AsyncSession) -> TokenResponse:
-    user = await db.scalar(select(User).where(User.email == data.email))
+async def authenticate_user(email: str, password: str, db: AsyncSession) -> TokenResponse:
+    """Validate credentials and return JWT tokens."""
+    result = await db.execute(select(User).where(User.email == email))
+    user = result.scalar_one_or_none()
 
-    if not user or not verify_password(data.password, user.hashed_password):
+    if user is None or not verify_password(password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="E-mail ou senha inválidos",
+            detail="Invalid email or password",
         )
 
     if not user.is_active:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Conta desativada")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account is deactivated",
+        )
 
-    return _build_tokens(user.id, user.tenant_id, user.email)
+    return TokenResponse(
+        access_token=create_access_token(user.id, user.tenant_id),
+        refresh_token=create_refresh_token(user.id, user.tenant_id),
+    )
 
 
-async def refresh(refresh_token: str, db: AsyncSession) -> TokenResponse:
+async def refresh_tokens(refresh_token: str, db: AsyncSession) -> TokenResponse:
+    """Validate a refresh token and return a new token pair."""
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Invalid or expired refresh token",
+    )
     try:
         payload = decode_token(refresh_token)
-    except ValueError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token inválido")
+        if payload.get("type") != "refresh":
+            raise credentials_exception
+        user_id = payload.get("sub")
+        tenant_id = payload.get("tenant_id")
+        if user_id is None or tenant_id is None:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
 
-    if payload.get("type") != "refresh":
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token incorreto")
+    from uuid import UUID
 
-    user_id = UUID(payload["sub"])
-    user = await db.get(User, user_id)
+    result = await db.execute(select(User).where(User.id == UUID(user_id)))
+    user = result.scalar_one_or_none()
+    if user is None or not user.is_active:
+        raise credentials_exception
 
-    if not user or not user.is_active:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuário não encontrado")
-
-    return _build_tokens(user.id, user.tenant_id, user.email)
-
-
-def _build_tokens(user_id: UUID, tenant_id: UUID, email: str) -> TokenResponse:
     return TokenResponse(
-        access_token=create_access_token(user_id, tenant_id, {"email": email}),
-        refresh_token=create_refresh_token(user_id, tenant_id),
+        access_token=create_access_token(user.id, user.tenant_id),
+        refresh_token=create_refresh_token(user.id, user.tenant_id),
     )

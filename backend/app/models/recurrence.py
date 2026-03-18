@@ -1,36 +1,46 @@
+"""Recurrence model (recurring bills, subscriptions)."""
+
 import uuid
 from datetime import date
 from decimal import Decimal
 
-from sqlalchemy import Date, ForeignKey, Numeric, String
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Boolean, Date, ForeignKey, Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.db.session import Base
-from app.models.base import TenantMixin, TimestampMixin
+from app.models.base import Base
 
 
-class Recurrence(Base, TenantMixin, TimestampMixin):
-    """Parcelas detectadas e contas fixas recorrentes."""
-
+class Recurrence(Base):
     __tablename__ = "recurrences"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    description: Mapped[str] = mapped_column(String(256), nullable=False)
-    amount: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
-    category_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("categories.id", ondelete="SET NULL"), nullable=True
+    description: Mapped[str] = mapped_column(String(500), nullable=False)
+    amount: Mapped[Decimal] = mapped_column(
+        Numeric(precision=18, scale=2), nullable=False
     )
+    type: Mapped[str] = mapped_column(
+        String(20), nullable=False
+    )  # income / expense
+    frequency: Mapped[str] = mapped_column(
+        String(20), nullable=False
+    )  # monthly, weekly, yearly
+    next_due_date: Mapped[date] = mapped_column(Date, nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
-    frequency: Mapped[str] = mapped_column(String(20), nullable=False)
-    # monthly | weekly | yearly | installment
+    # ── FKs ──────────────────────────────────────────────────
+    account_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("accounts.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    account: Mapped["Account"] = relationship(back_populates="recurrences")  # noqa: F821
 
-    # Para parcelas
-    total_installments: Mapped[int | None] = mapped_column(nullable=True)
-    current_installment: Mapped[int | None] = mapped_column(nullable=True)
-    next_due_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    category_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("categories.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    category: Mapped["Category | None"] = relationship(back_populates="recurrences")  # noqa: F821
 
-    is_active: Mapped[bool] = mapped_column(nullable=False, default=True)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    tenant: Mapped["Tenant"] = relationship(back_populates="recurrences")  # noqa: F821
 
-    transactions: Mapped[list["Transaction"]] = relationship(back_populates="recurrence")
-    tenant: Mapped["Tenant"] = relationship(back_populates="recurrences")
+    def __repr__(self) -> str:
+        return f"<Recurrence {self.description} ({self.frequency})>"

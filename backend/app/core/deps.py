@@ -1,46 +1,53 @@
-from typing import Annotated
+"""FastAPI dependencies shared across routers."""
+
+from collections.abc import AsyncGenerator
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from jose import JWTError
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import decode_token
-from app.db.session import get_session
+from app.db.session import async_session_factory
+from app.models.user import User
 
-bearer = HTTPBearer()
+bearer_scheme = HTTPBearer()
 
 
-class CurrentUser:
-    def __init__(self, user_id: UUID, tenant_id: UUID, email: str):
-        self.user_id = user_id
-        self.tenant_id = tenant_id
-        self.email = email
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
+    """Yield an async database session and ensure it is closed afterwards."""
+    async with async_session_factory() as session:
+        try:
+            yield session
+        finally:
+            await session.close()
 
 
 async def get_current_user(
-    credentials: Annotated[HTTPAuthorizationCredentials, Depends(bearer)],
-) -> CurrentUser:
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+    db: AsyncSession = Depends(get_db),
+) -> User:
+    """Decode the Bearer token and return the corresponding active user."""
     token = credentials.credentials
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
     try:
         payload = decode_token(token)
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token inválido ou expirado",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        if payload.get("type") != "access":
+            raise credentials_exception
+        user_id = payload.get("sub")
+        if user_id is None:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
 
-    if payload.get("type") != "access":
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token inválido")
-
-    return CurrentUser(
-        user_id=UUID(payload["sub"]),
-        tenant_id=UUID(payload["tenant_id"]),
-        email=payload.get("email", ""),
-    )
-
-
-# Tipo reutilizável em todos os endpoints
-AuthUser = Annotated[CurrentUser, Depends(get_current_user)]
-DBSession = Annotated[AsyncSession, Depends(get_session)]
+    result = await db.execute(select(User).where(User.id == UUID(user_id)))
+    user = result.scalar_one_or_none()
+    if user is None or not user.is_active:
+        raise credentials_exception
+    return user

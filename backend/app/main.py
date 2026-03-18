@@ -1,39 +1,32 @@
+"""FastAPI application entry-point."""
+
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from collections.abc import AsyncGenerator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 
-from app.api.v1.router import api_router
+from app.api.v1.router import v1_router
 from app.core.config import settings
-from app.core.tenant_middleware import TenantContextMiddleware
-from app.db.session import engine, Base
-from app.integrations.pluggy_client import pluggy_client
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    # Startup: cria tabelas se não existirem (dev only)
-    if not settings.is_production:
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
+async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+    """Application startup / shutdown hooks."""
+    # startup: add future initialisation here (cache warm-up, etc.)
     yield
-    # Shutdown
-    await pluggy_client.close()
-    await engine.dispose()
+    # shutdown: add future cleanup here (close pools, etc.)
 
 
 app = FastAPI(
-    title="FinControl API",
-    description="API de controle financeiro pessoal com Open Finance",
-    version="0.1.0",
+    title=settings.APP_NAME,
+    version=settings.APP_VERSION,
     docs_url="/docs",
     redoc_url="/redoc",
     lifespan=lifespan,
 )
 
-# ── CORS ─────────────────────────────────────────────────────────────────────
+# ── CORS ─────────────────────────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
@@ -42,15 +35,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ── Tenant Context Middleware ────────────────────────────────────────────────
-# Deve vir depois do CORS, injeta tenant_id em toda request
-app.add_middleware(TenantContextMiddleware)
-
-# ── Routers ──────────────────────────────────────────────────────────────────
-app.include_router(api_router)
+# ── Routers ──────────────────────────────────────────────────
+app.include_router(v1_router)
 
 
-# ── Health check ─────────────────────────────────────────────────────────────
-@app.get("/health", tags=["Health"])
-async def health() -> JSONResponse:
-    return JSONResponse({"status": "ok", "app": settings.APP_NAME, "env": settings.APP_ENV})
+# ── Health check ─────────────────────────────────────────────
+@app.get("/health", tags=["infra"])
+async def health_check():
+    return {"status": "ok"}

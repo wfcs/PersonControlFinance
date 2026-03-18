@@ -1,40 +1,47 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { create } from "zustand"
+import { persist } from "zustand/middleware"
+import { setAccessToken, setRefreshToken, clearTokens } from "@/lib/auth"
 
-export interface AuthUser {
-  id: string;
-  email: string;
-  full_name: string | null;
-  tenant_id: string;
+export interface UserProfile {
+  id: string
+  email: string
+  full_name: string
+  tenant_id: string
 }
 
 interface AuthState {
-  accessToken: string | null;
-  refreshToken: string | null;
-  user: AuthUser | null;
-  setTokens: (access: string, refresh: string) => void;
-  setUser: (user: AuthUser) => void;
-  logout: () => void;
-  isAuthenticated: () => boolean;
+  user: UserProfile | null
+  isAuthenticated: boolean
+  setUser: (user: UserProfile) => void
+  setTokens: (accessToken: string, refreshToken: string) => void
+  logout: () => void
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set, get) => ({
-      accessToken: null,
-      refreshToken: null,
+    (set) => ({
       user: null,
+      isAuthenticated: false,
 
-      setTokens: (access, refresh) =>
-        set({ accessToken: access, refreshToken: refresh }),
+      setUser: (user: UserProfile) =>
+        set({ user, isAuthenticated: true }),
 
-      setUser: (user) => set({ user }),
+      setTokens: (accessToken: string, refreshToken: string) => {
+        setAccessToken(accessToken)
+        setRefreshToken(refreshToken)
+      },
 
-      logout: () =>
-        set({ accessToken: null, refreshToken: null, user: null }),
-
-      isAuthenticated: () => !!get().accessToken,
+      logout: () => {
+        clearTokens()
+        set({ user: null, isAuthenticated: false })
+      },
     }),
-    { name: "visor-auth" }
+    {
+      name: "fincontrol-auth",
+      partialize: (state) => ({
+        user: state.user,
+        isAuthenticated: state.isAuthenticated,
+      }),
+    }
   )
-);
+)

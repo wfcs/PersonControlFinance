@@ -1,36 +1,56 @@
-from fastapi import APIRouter, status
+"""Authentication endpoints: register, login, refresh, logout."""
 
-from app.core.deps import AuthUser, DBSession
-from app.schemas.auth import LoginRequest, RefreshRequest, RegisterRequest, TokenResponse
-from app.schemas.user import UserOut
-from app.services import auth_service
+from fastapi import APIRouter, Depends, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
-router = APIRouter(prefix="/auth", tags=["Auth"])
+from app.core.deps import get_db
+from app.schemas.auth import (
+    LoginRequest,
+    RefreshRequest,
+    RegisterRequest,
+    TokenResponse,
+)
+from app.services.auth_service import authenticate_user, refresh_tokens, register_user
 
-
-@router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
-async def register(data: RegisterRequest, db: DBSession) -> TokenResponse:
-    """Cria novo usuário + tenant e retorna tokens."""
-    return await auth_service.register(data, db)
-
-
-@router.post("/login", response_model=TokenResponse)
-async def login(data: LoginRequest, db: DBSession) -> TokenResponse:
-    """Autentica e retorna access + refresh token."""
-    return await auth_service.login(data, db)
+router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post("/refresh", response_model=TokenResponse)
-async def refresh(data: RefreshRequest, db: DBSession) -> TokenResponse:
-    """Gera novo access token a partir do refresh token."""
-    return await auth_service.refresh(data.refresh_token, db)
+@router.post(
+    "/register",
+    response_model=TokenResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Register a new user and tenant",
+)
+async def register(payload: RegisterRequest, db: AsyncSession = Depends(get_db)):
+    return await register_user(payload, db)
 
 
-@router.get("/me", response_model=UserOut)
-async def me(current_user: AuthUser, db: DBSession) -> UserOut:
-    """Retorna dados do usuário autenticado."""
-    from sqlalchemy import select
-    from app.models.user import User
+@router.post(
+    "/login",
+    response_model=TokenResponse,
+    summary="Authenticate and receive tokens",
+)
+async def login(payload: LoginRequest, db: AsyncSession = Depends(get_db)):
+    return await authenticate_user(payload.email, payload.password, db)
 
-    user = await db.scalar(select(User).where(User.id == current_user.user_id))
-    return UserOut.model_validate(user)
+
+@router.post(
+    "/refresh",
+    response_model=TokenResponse,
+    summary="Refresh an expired access token",
+)
+async def refresh(payload: RefreshRequest, db: AsyncSession = Depends(get_db)):
+    return await refresh_tokens(payload.refresh_token, db)
+
+
+@router.post(
+    "/logout",
+    status_code=status.HTTP_200_OK,
+    summary="Logout (client-side token discard)",
+)
+async def logout():
+    """Logout is handled client-side by discarding tokens.
+
+    A server-side token blocklist can be added later with Redis.
+    """
+    return {"detail": "Successfully logged out"}

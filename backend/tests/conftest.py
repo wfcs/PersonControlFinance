@@ -1,94 +1,58 @@
-"""
-Fixtures compartilhadas entre todos os testes.
-Usa SQLite em memória para não precisar de PostgreSQL no CI.
-"""
+"""Shared test fixtures: async SQLite in-memory DB + httpx AsyncClient."""
+
 import os
 
+# Force SQLite for tests BEFORE any app imports
+os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///:memory:"
 os.environ["TESTING"] = "1"
 
+from collections.abc import AsyncGenerator
+
 import pytest
-import pytest_asyncio
-from httpx import AsyncClient, ASGITransport
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.ext.compiler import compiles
 
-@compiles(JSONB, "sqlite")
-def compile_jsonb_sqlite(type_, compiler, **kw):
-    return "JSON"
-
+from app.core.deps import get_db
 from app.main import app
-from app.db.session import Base, get_session
+from app.models.base import Base
 
-# ── Banco de dados in-memory para testes ─────────────────────────────────────
-TEST_DB_URL = "sqlite+aiosqlite:///:memory:"
+# ── Test engine (SQLite async in-memory) ─────────────────────
 
-engine_test = create_async_engine(TEST_DB_URL, echo=False)
+test_engine = create_async_engine(
+    "sqlite+aiosqlite:///:memory:",
+    echo=False,
+)
+
 TestSessionLocal = async_sessionmaker(
-    bind=engine_test, expire_on_commit=False, autoflush=False
+    bind=test_engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
 )
 
 
-async def override_get_session():
+async def _override_get_db() -> AsyncGenerator[AsyncSession, None]:
     async with TestSessionLocal() as session:
         try:
             yield session
-            await session.commit()
-        except Exception:
-            await session.rollback()
-            raise
+        finally:
+            await session.close()
 
 
-app.dependency_overrides[get_session] = override_get_session
+app.dependency_overrides[get_db] = _override_get_db
 
-
-# ── Fixtures ─────────────────────────────────────────────────────────────────
 
 @pytest.fixture(autouse=True)
-async def setup_db():
-    """Recria o schema antes de cada teste."""
-    async with engine_test.begin() as conn:
+async def setup_database():
+    """Create all tables before each test and drop them after."""
+    async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield
-    async with engine_test.begin() as conn:
+    async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
 
 
-@pytest_asyncio.fixture
-async def client() -> AsyncClient:
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
-        yield c
-
-
-@pytest_asyncio.fixture
-async def auth_client(client: AsyncClient) -> dict:
-    """Retorna client + token de usuário já registrado."""
-    res = await client.post("/api/v1/auth/register", json={
-        "email": "dev@visor.app",
-        "password": "Senha@123",
-        "full_name": "Dev Visor",
-    })
-    token = res.json()["access_token"]
-    client.headers["Authorization"] = f"Bearer {token}"
-    return {"client": client, "token": token}
-
-
-@pytest_asyncio.fixture
-async def db_session() -> AsyncSession:
-    """Fornece uma sessão de banco de dados para testes."""
-    async with TestSessionLocal() as session:
-        yield session
-
-
-@pytest_asyncio.fixture
-async def sample_account(auth_client: dict) -> dict:
-    """Cria uma conta e retorna o JSON da resposta."""
-    client: AsyncClient = auth_client["client"]
-    res = await client.post("/api/v1/accounts/", json={
-        "name": "Nubank",
-        "institution_name": "Nubank",
-        "type": "checking",
-        "balance": "1500.00",
-    })
-    assert res.status_code == 201
-    return res.json()
+@pytest.fixture
+async def client() -> AsyncGenerator[AsyncClient, None]:
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://testserver") as ac:
+        yield ac
