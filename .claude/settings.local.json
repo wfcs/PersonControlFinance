@@ -7,7 +7,22 @@
       "Read(//c/Users/felipedovinhoo/AppData/Local/GitHub CLI/**)",
       "Bash(\"C:/Program Files/GitHub CLI/gh.exe\" auth status)",
       "Bash(\"C:/Program Files/GitHub CLI/gh.exe\" repo create wfcs/PersonControlFinanceSim --public --description \"Personal Finance Control - SaaS Application\")",
-      "Bash(\"C:/Program Files/GitHub CLI/gh.exe\" repo delete wfcs/PersonControlFinanceSim --yes)"
+      "Bash(\"C:/Program Files/GitHub CLI/gh.exe\" repo delete wfcs/PersonControlFinanceSim --yes)",
+      "Bash(npx create-next-app@latest frontend --typescript --tailwind --eslint --app --src-dir --no-import-alias --use-npm)",
+      "Bash(ls \"C:/Users/felipedovinhoo/OneDrive/01_Projetos/02_apps/02_app_fin/\"*.*)",
+      "Bash(ls \"C:/Users/felipedovinhoo/OneDrive/01_Projetos/02_apps/02_app_fin/.env\"*)",
+      "Bash(rm -rf frontend)",
+      "Bash(printf 'N\\\\nN\\\\n')",
+      "Bash(yes)",
+      "Bash(npx shadcn@latest init -d)",
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run:*)",
+      "Bash(pip install:*)",
+      "Bash(python -m pytest tests/ -v)",
+      "Bash(for f:*)",
+      "Bash(do sed:*)",
+      "Bash(done)"
     ]
   }
 }

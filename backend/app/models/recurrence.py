@@ -1,0 +1,33 @@
+from __future__ import annotations
+
+import uuid
+from datetime import date
+from decimal import Decimal
+
+from sqlalchemy import Boolean, Date, ForeignKey, Numeric, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.models.base import Base, FlexibleUUID, TimestampMixin, UUIDPrimaryKeyMixin
+
+
+class Recurrence(Base, UUIDPrimaryKeyMixin, TimestampMixin):
+    __tablename__ = "recurrences"
+
+    description: Mapped[str] = mapped_column(String(500), nullable=False)
+    amount: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
+    type: Mapped[str] = mapped_column(String(50), nullable=False)
+    frequency: Mapped[str] = mapped_column(String(50), nullable=False)
+    next_due_date: Mapped[date] = mapped_column(Date, nullable=False)
+    account_id: Mapped[uuid.UUID] = mapped_column(
+        FlexibleUUID, ForeignKey("accounts.id"), nullable=False, index=True
+    )
+    category_id: Mapped[uuid.UUID | None] = mapped_column(
+        FlexibleUUID, ForeignKey("categories.id"), nullable=True, index=True
+    )
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        FlexibleUUID, ForeignKey("tenants.id"), nullable=False, index=True
+    )
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    account: Mapped[Account] = relationship("Account", lazy="selectin")
+    category: Mapped[Category | None] = relationship("Category", lazy="selectin")

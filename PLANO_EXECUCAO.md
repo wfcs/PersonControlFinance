@@ -1,7 +1,7 @@
 # Plano de Execucao — PersonControlFinance
 
 > Atualizado em: 2026-03-18
-> Total: 53 tasks | Concluidas: 0/53 (0%)
+> Total: 53 tasks | Concluidas: 5/53 (9%)
 
 ---
 
@@ -10,11 +10,11 @@
 
 | ID     | Task                          | Stack      | Status      |
 |--------|-------------------------------|------------|-------------|
-| BE-01  | Setup FastAPI                 | Python     | PENDENTE    |
-| BE-02  | Modelagem do banco de dados   | SQL        | PENDENTE    |
-| BE-03  | Autenticacao JWT              | Python     | PENDENTE    |
-| FE-01  | Setup Next.js + Tailwind      | TypeScript | PENDENTE    |
-| SRV-01 | Docker + docker-compose (dev) | Docker     | PENDENTE    |
+| BE-01  | Setup FastAPI                 | Python     | COMPLETO ✅ |
+| BE-02  | Modelagem do banco de dados   | SQL        | COMPLETO ✅ |
+| BE-03  | Autenticacao JWT              | Python     | COMPLETO ✅ |
+| FE-01  | Setup Next.js + Tailwind      | TypeScript | COMPLETO ✅ |
+| SRV-01 | Docker + docker-compose (dev) | Docker     | COMPLETO ✅ |
 
 ---
 
