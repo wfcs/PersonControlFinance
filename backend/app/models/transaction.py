@@ -4,7 +4,7 @@ import uuid
 from datetime import date
 from decimal import Decimal
 
-from sqlalchemy import Boolean, Date, ForeignKey, Numeric, String, Text
+from sqlalchemy import Boolean, Date, ForeignKey, Index, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
@@ -12,6 +12,12 @@ from app.models.base import Base
 
 class Transaction(Base):
     __tablename__ = "transactions"
+    __table_args__ = (
+        Index("ix_transactions_tenant_id_id", "tenant_id", "id"),
+        Index("ix_transactions_tenant_id_date", "tenant_id", "date"),
+        Index("ix_transactions_tenant_id_type", "tenant_id", "type"),
+        Index("ix_transactions_tenant_id_account_id", "tenant_id", "account_id"),
+    )
 
     description: Mapped[str] = mapped_column(String(500), nullable=False)
     amount: Mapped[Decimal] = mapped_column(

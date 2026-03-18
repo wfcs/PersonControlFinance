@@ -2,7 +2,7 @@
 
 import uuid
 
-from sqlalchemy import Boolean, ForeignKey, String
+from sqlalchemy import Boolean, ForeignKey, Index, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
@@ -10,6 +10,10 @@ from app.models.base import Base
 
 class User(Base):
     __tablename__ = "users"
+    __table_args__ = (
+        Index("ix_users_tenant_id_id", "tenant_id", "id"),
+        Index("ix_users_tenant_id_email", "tenant_id", "email"),
+    )
 
     email: Mapped[str] = mapped_column(
         String(320), unique=True, nullable=False, index=True

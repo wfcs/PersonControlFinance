@@ -2,7 +2,7 @@
 
 import uuid
 
-from sqlalchemy import ForeignKey, String, Text
+from sqlalchemy import ForeignKey, Index, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
@@ -10,6 +10,10 @@ from app.models.base import Base
 
 class WebhookLog(Base):
     __tablename__ = "webhook_logs"
+    __table_args__ = (
+        Index("ix_webhook_logs_tenant_id_id", "tenant_id", "id"),
+        Index("ix_webhook_logs_tenant_id_source", "tenant_id", "source"),
+    )
 
     source: Mapped[str] = mapped_column(String(100), nullable=False)  # stripe, pluggy
     event_type: Mapped[str] = mapped_column(String(200), nullable=False)

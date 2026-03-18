@@ -4,7 +4,7 @@ import uuid
 from datetime import date
 from decimal import Decimal
 
-from sqlalchemy import Boolean, Date, ForeignKey, Numeric, String
+from sqlalchemy import Boolean, Date, ForeignKey, Index, Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
@@ -12,6 +12,10 @@ from app.models.base import Base
 
 class Recurrence(Base):
     __tablename__ = "recurrences"
+    __table_args__ = (
+        Index("ix_recurrences_tenant_id_id", "tenant_id", "id"),
+        Index("ix_recurrences_tenant_id_next_due_date", "tenant_id", "next_due_date"),
+    )
 
     description: Mapped[str] = mapped_column(String(500), nullable=False)
     amount: Mapped[Decimal] = mapped_column(

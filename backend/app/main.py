@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.router import v1_router
 from app.core.config import settings
+from app.core.tenant_middleware import TenantMiddleware
 
 
 @asynccontextmanager
@@ -26,7 +27,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# ── CORS ─────────────────────────────────────────────────────
+# ── Middleware (order matters: last added = first executed) ───
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
@@ -34,6 +35,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(TenantMiddleware)
 
 # ── Routers ──────────────────────────────────────────────────
 app.include_router(v1_router)

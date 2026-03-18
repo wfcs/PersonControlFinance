@@ -3,7 +3,7 @@
 import uuid
 from decimal import Decimal
 
-from sqlalchemy import ForeignKey, Numeric, String
+from sqlalchemy import ForeignKey, Index, Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
@@ -11,6 +11,10 @@ from app.models.base import Base
 
 class Category(Base):
     __tablename__ = "categories"
+    __table_args__ = (
+        Index("ix_categories_tenant_id_id", "tenant_id", "id"),
+        Index("ix_categories_tenant_id_type", "tenant_id", "type"),
+    )
 
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     icon: Mapped[str | None] = mapped_column(String(50), nullable=True)
