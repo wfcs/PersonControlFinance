@@ -1,0 +1,359 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans)}
+.board{padding:1rem 0}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1.25rem}
+.tab{padding:6px 14px;border-radius:20px;font-size:13px;font-weight:500;cursor:pointer;border:0.5px solid var(--color-border-secondary);color:var(--color-text-secondary);background:transparent;transition:all 0.15s}
+.tab.active{background:var(--color-background-secondary);color:var(--color-text-primary);border-color:var(--color-border-primary)}
+.section{display:none}.section.active{display:block}
+.section-header{display:flex;align-items:center;gap:10px;margin-bottom:1rem}
+.section-title{font-size:16px;font-weight:500;color:var(--color-text-primary)}
+.count-badge{font-size:12px;padding:2px 8px;border-radius:10px;font-weight:500}
+.tasks{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}
+.task{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:14px 16px;border-left:3px solid transparent}
+.task-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px}
+.task-id{font-size:11px;color:var(--color-text-tertiary);font-weight:500;white-space:nowrap}
+.task-badges{display:flex;gap:5px;flex-wrap:wrap}
+.badge{font-size:11px;padding:2px 7px;border-radius:6px;font-weight:500;white-space:nowrap}
+.task-title{font-size:13px;font-weight:500;color:var(--color-text-primary);margin-bottom:5px;line-height:1.4}
+.task-desc{font-size:12px;color:var(--color-text-secondary);line-height:1.5}
+.p-high{border-left-color:#E24B4A}
+.p-mid{border-left-color:#EF9F27}
+.p-low{border-left-color:#1D9E75}
+.b-python{background:#E6F1FB;color:#185FA5}
+.b-ts{background:#E1F5EE;color:#0F6E56}
+.b-sql{background:#EEEDFE;color:#534AB7}
+.b-go{background:#FAEEDA;color:#854F0B}
+.b-docker{background:#FCEBEB;color:#A32D2D}
+.b-react{background:#FBEAF0;color:#993556}
+.b-infra{background:#F1EFE8;color:#5F5E5A}
+.b-high{background:#FCEBEB;color:#A32D2D}
+.b-mid{background:#FAEEDA;color:#854F0B}
+.b-low{background:#EAF3DE;color:#3B6D11}
+.section-be .count-badge{background:#E6F1FB;color:#185FA5}
+.section-fe .count-badge{background:#FBEAF0;color:#993556}
+.section-srv .count-badge{background:#FCEBEB;color:#A32D2D}
+.section-mt .count-badge{background:#EEEDFE;color:#534AB7}
+.progress-bar{height:4px;border-radius:2px;background:var(--color-border-tertiary);margin-bottom:1.25rem;overflow:hidden}
+.progress-fill{height:100%;border-radius:2px;background:var(--color-border-primary)}
+</style>
+
+<div class="board">
+  <div class="tabs">
+    <button class="tab active" onclick="show('be',this)">⚙ Back-end</button>
+    <button class="tab" onclick="show('fe',this)">🖥 Front-end</button>
+    <button class="tab" onclick="show('srv',this)">🗄 Servidor</button>
+    <button class="tab" onclick="show('mt',this)">🏢 Multi-tenant</button>
+  </div>
+
+  <div id="be" class="section section-be active">
+    <div class="section-header">
+      <span class="section-title">Back-end</span>
+      <span class="count-badge">16 tasks</span>
+    </div>
+    <div class="tasks">
+      <div class="task p-high">
+        <div class="task-top"><span class="task-id">BE-01</span><div class="task-badges"><span class="badge b-python">Python</span><span class="badge b-high">Alta</span></div></div>
+        <div class="task-title">Setup do projeto FastAPI</div>
+        <div class="task-desc">Estrutura base de pastas, settings com Pydantic, CORS, health-check endpoint e documentação Swagger.</div>
+      </div>
+      <div class="task p-high">
+        <div class="task-top"><span class="task-id">BE-02</span><div class="task-badges"><span class="badge b-sql">SQL</span><span class="badge b-high">Alta</span></div></div>
+        <div class="task-title">Modelagem do banco de dados</div>
+        <div class="task-desc">Tabelas: users, tenants, accounts, transactions, categories, goals, invoices, recurrences, plans. PostgreSQL com Alembic.</div>
+      </div>
+      <div class="task p-high">
+        <div class="task-top"><span class="task-id">BE-03</span><div class="task-badges"><span class="badge b-python">Python</span><span class="badge b-high">Alta</span></div></div>
+        <div class="task-title">Autenticação JWT</div>
+        <div class="task-desc">Register, login, refresh token, logout. Hash de senha com bcrypt. Middleware de autenticação por rota.</div>
+      </div>
+      <div class="task p-high">
+        <div class="task-top"><span class="task-id">BE-04</span><div class="task-badges"><span class="badge b-python">Python</span><span class="badge b-high">Alta</span></div></div>
+        <div class="task-title">Integração Open Finance</div>
+        <div class="task-desc">Conector via Pluggy ou Belvo. OAuth com bancos (Itaú, Nubank etc). Sync de contas e saldos via API.</div>
+      </div>
+      <div class="task p-high">
+        <div class="task-top"><span class="task-id">BE-05</span><div class="task-badges"><span class="badge b-python">Python</span><span class="badge b-high">Alta</span></div></div>
+        <div class="task-title">API de transações</div>
+        <div class="task-desc">CRUD completo. Filtros por data, conta, categoria, valor. Paginação cursor-based. Export CSV.</div>
+      </div>
+      <div class="task p-high">
+        <div class="task-top"><span class="task-id">BE-06</span><div class="task-badges"><span class="badge b-python">Python</span><span class="badge b-high">Alta</span></div></div>
+        <div class="task-title">Engine de categorização automática</div>
+        <div class="task-desc">Regras por keywords + modelo de ML simples. Categorias customizáveis por usuário. Tags e automações.</div>
+      </div>
+      <div class="task p-mid">
+        <div class="task-top"><span class="task-id">BE-07</span><div class="task-badges"><span class="badge b-python">Python</span><span class="badge b-mid">Média</span></div></div>
+        <div class="task-title">Motor de recorrências</div>
+        <div class="task-desc">Detecção automática de parcelas e contas fixas a partir do histórico. Previsão de próximas cobranças.</div>
+      </div>
+      <div class="task p-mid">
+        <div class="task-top"><span class="task-id">BE-08</span><div class="task-badges"><span class="badge b-python">Python</span><span class="badge b-mid">Média</span></div></div>
+        <div class="task-title">API de fluxo de caixa</div>
+        <div class="task-desc">Agregações de receita e gasto por período. Comparativo com mês anterior. Sankey de categorias.</div>
+      </div>
+      <div class="task p-mid">
+        <div class="task-top"><span class="task-id">BE-09</span><div class="task-badges"><span class="badge b-python">Python</span><span class="badge b-mid">Média</span></div></div>
+        <div class="task-title">API de projeção de saldo</div>
+        <div class="task-desc">Cálculo de saldo projetado por mês (3M/6M/12M). Considera recorrências, parcelas e variável histórico.</div>
+      </div>
+      <div class="task p-mid">
+        <div class="task-top"><span class="task-id">BE-10</span><div class="task-badges"><span class="badge b-python">Python</span><span class="badge b-mid">Média</span></div></div>
+        <div class="task-title">API de patrimônio</div>
+        <div class="task-desc">Ativos (caixa, fundos, renda fixa) e passivos (dívidas). Histórico de evolução do patrimônio líquido.</div>
+      </div>
+      <div class="task p-mid">
+        <div class="task-top"><span class="task-id">BE-11</span><div class="task-badges"><span class="badge b-python">Python</span><span class="badge b-mid">Média</span></div></div>
+        <div class="task-title">API de faturas de cartão</div>
+        <div class="task-desc">Agrupamento de transações por ciclo de fatura. Parcelas previstas e recorrentes dentro da fatura.</div>
+      </div>
+      <div class="task p-mid">
+        <div class="task-top"><span class="task-id">BE-12</span><div class="task-badges"><span class="badge b-python">Python</span><span class="badge b-mid">Média</span></div></div>
+        <div class="task-title">API de categorias e metas</div>
+        <div class="task-desc">CRUD de categorias com subcategorias. Metas financeiras com progresso, prazo e valor alvo.</div>
+      </div>
+      <div class="task p-mid">
+        <div class="task-top"><span class="task-id">BE-13</span><div class="task-badges"><span class="badge b-python">Python</span><span class="badge b-mid">Média</span></div></div>
+        <div class="task-title">Webhooks Open Finance</div>
+        <div class="task-desc">Recebimento e processamento assíncrono de atualizações via webhook. Fila Celery + Redis.</div>
+      </div>
+      <div class="task p-mid">
+        <div class="task-top"><span class="task-id">BE-14</span><div class="task-badges"><span class="badge b-python">Python</span><span class="badge b-mid">Média</span></div></div>
+        <div class="task-title">Job de sincronização periódica</div>
+        <div class="task-desc">Celery Beat para sync automático das contas Open Finance a cada N minutos por tenant.</div>
+      </div>
+      <div class="task p-low">
+        <div class="task-top"><span class="task-id">BE-15</span><div class="task-badges"><span class="badge b-python">Python</span><span class="badge b-low">Baixa</span></div></div>
+        <div class="task-title">Sistema de notificações</div>
+        <div class="task-desc">E-mail transacional (SendGrid) e push notifications. Alertas de limite de categoria e cobranças futuras.</div>
+      </div>
+      <div class="task p-low">
+        <div class="task-top"><span class="task-id">BE-16</span><div class="task-badges"><span class="badge b-python">Python</span><span class="badge b-low">Baixa</span></div></div>
+        <div class="task-title">Assistente de IA (premium)</div>
+        <div class="task-desc">Endpoint para chat financeiro contextualizado. Usa histórico de transações + LLM para insights personalizados.</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="fe" class="section section-fe">
+    <div class="section-header">
+      <span class="section-title">Front-end</span>
+      <span class="count-badge">16 tasks</span>
+    </div>
+    <div class="tasks">
+      <div class="task p-high">
+        <div class="task-top"><span class="task-id">FE-01</span><div class="task-badges"><span class="badge b-ts">TypeScript</span><span class="badge b-high">Alta</span></div></div>
+        <div class="task-title">Setup Next.js + Tailwind + shadcn</div>
+        <div class="task-desc">App Router, Tailwind CSS, shadcn/ui, React Query, Zustand. ESLint + Prettier + Husky configurados.</div>
+      </div>
+      <div class="task p-high">
+        <div class="task-top"><span class="task-id">FE-02</span><div class="task-badges"><span class="badge b-ts">TypeScript</span><span class="badge b-high">Alta</span></div></div>
+        <div class="task-title">Layout base e sidebar</div>
+        <div class="task-desc">Sidebar responsiva com todos os módulos do VISOR (Visão Geral, Transações, Recorrentes etc). Header e breadcrumb.</div>
+      </div>
+      <div class="task p-high">
+        <div class="task-top"><span class="task-id">FE-03</span><div class="task-badges"><span class="badge b-ts">TypeScript</span><span class="badge b-high">Alta</span></div></div>
+        <div class="task-title">Tela de autenticação</div>
+        <div class="task-desc">Login, cadastro, recuperação de senha. Validação com React Hook Form + Zod. Auth context global.</div>
+      </div>
+      <div class="task p-high">
+        <div class="task-top"><span class="task-id">FE-04</span><div class="task-badges"><span class="badge b-react">React</span><span class="badge b-high">Alta</span></div></div>
+        <div class="task-title">Dashboard — visão geral</div>
+        <div class="task-desc">Ritmo de gastos (line chart), resultado parcial, principais categorias, faturas do mês, transações recentes e próximas despesas.</div>
+      </div>
+      <div class="task p-high">
+        <div class="task-top"><span class="task-id">FE-05</span><div class="task-badges"><span class="badge b-react">React</span><span class="badge b-high">Alta</span></div></div>
+        <div class="task-title">Tela de transações</div>
+        <div class="task-desc">Tabela com paginação, filtros (período, conta, tipo, categoria), busca, seleção múltipla e export CSV.</div>
+      </div>
+      <div class="task p-high">
+        <div class="task-top"><span class="task-id">FE-06</span><div class="task-badges"><span class="badge b-react">React</span><span class="badge b-high">Alta</span></div></div>
+        <div class="task-title">Tela de contas (Open Finance)</div>
+        <div class="task-desc">Lista de cartões e contas bancárias com saldos. Botão "Adicionar conta" com fluxo OAuth Open Finance. Status de conexão.</div>
+      </div>
+      <div class="task p-mid">
+        <div class="task-top"><span class="task-id">FE-07</span><div class="task-badges"><span class="badge b-react">React</span><span class="badge b-mid">Média</span></div></div>
+        <div class="task-title">Tela de recorrentes</div>
+        <div class="task-desc">Gráfico anual de parcelas vs contas fixas. Lista por mês com navegação. Detalhes de cada recorrência.</div>
+      </div>
+      <div class="task p-mid">
+        <div class="task-top"><span class="task-id">FE-08</span><div class="task-badges"><span class="badge b-react">React</span><span class="badge b-mid">Média</span></div></div>
+        <div class="task-title">Tela de fluxo de caixa</div>
+        <div class="task-desc">Resultado líquido, gráfico de gastos e receitas por mês com stacked bar chart por categoria. Filtro de período.</div>
+      </div>
+      <div class="task p-mid">
+        <div class="task-top"><span class="task-id">FE-09</span><div class="task-badges"><span class="badge b-react">React</span><span class="badge b-mid">Média</span></div></div>
+        <div class="task-title">Tela de faturas</div>
+        <div class="task-desc">Total por mês com breakdown (parcelas, recorrentes, avulsas). Cartões com ciclo atual, estimativa e link para transações.</div>
+      </div>
+      <div class="task p-mid">
+        <div class="task-top"><span class="task-id">FE-10</span><div class="task-badges"><span class="badge b-react">React</span><span class="badge b-mid">Média</span></div></div>
+        <div class="task-title">Tela de categorias</div>
+        <div class="task-desc">Lista de categorias com subcategorias, gasto atual, limite mensal e barra de progresso. Tags e automações.</div>
+      </div>
+      <div class="task p-mid">
+        <div class="task-top"><span class="task-id">FE-11</span><div class="task-badges"><span class="badge b-react">React</span><span class="badge b-mid">Média</span></div></div>
+        <div class="task-title">Tela de metas financeiras</div>
+        <div class="task-desc">Lista de metas com progresso, prazo e valor alvo. CRUD de metas. Estado vazio com CTA.</div>
+      </div>
+      <div class="task p-mid">
+        <div class="task-top"><span class="task-id">FE-12</span><div class="task-badges"><span class="badge b-react">React</span><span class="badge b-mid">Média</span></div></div>
+        <div class="task-title">Tela de projeção de saldo</div>
+        <div class="task-desc">Gráfico de projeção mensal (3M/6M/12M) com alertas de saldo negativo. Detalhamento por mês com receitas e gastos.</div>
+      </div>
+      <div class="task p-mid">
+        <div class="task-top"><span class="task-id">FE-13</span><div class="task-badges"><span class="badge b-react">React</span><span class="badge b-mid">Média</span></div></div>
+        <div class="task-title">Tela de patrimônio</div>
+        <div class="task-desc">Patrimônio líquido, histórico evolutivo, breakdown ativos (caixa, fundos, renda fixa) e passivos com pesos.</div>
+      </div>
+      <div class="task p-mid">
+        <div class="task-top"><span class="task-id">FE-14</span><div class="task-badges"><span class="badge b-react">React</span><span class="badge b-mid">Média</span></div></div>
+        <div class="task-title">Tela de relatórios</div>
+        <div class="task-desc">Donut de gastos por categoria, resultado parcial, fluxo de caixa Sankey. Filtro de período global.</div>
+      </div>
+      <div class="task p-low">
+        <div class="task-top"><span class="task-id">FE-15</span><div class="task-badges"><span class="badge b-react">React</span><span class="badge b-low">Baixa</span></div></div>
+        <div class="task-title">Tela de planos e assinatura</div>
+        <div class="task-desc">Cards comparativos Pro vs Premium. Toggle mensal/anual com desconto. Status da assinatura e gestão de pagamento.</div>
+      </div>
+      <div class="task p-low">
+        <div class="task-top"><span class="task-id">FE-16</span><div class="task-badges"><span class="badge b-react">React</span><span class="badge b-low">Baixa</span></div></div>
+        <div class="task-title">Onboarding e convites</div>
+        <div class="task-desc">Fluxo de boas-vindas para conectar primeira conta. Sistema de convites com contador (0/3 convites aceitos).</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="srv" class="section section-srv">
+    <div class="section-header">
+      <span class="section-title">Servidor / Infra</span>
+      <span class="count-badge">12 tasks</span>
+    </div>
+    <div class="tasks">
+      <div class="task p-high">
+        <div class="task-top"><span class="task-id">SRV-01</span><div class="task-badges"><span class="badge b-docker">Docker</span><span class="badge b-high">Alta</span></div></div>
+        <div class="task-title">Docker + docker-compose (dev)</div>
+        <div class="task-desc">Containers para API (FastAPI), banco (PostgreSQL), cache (Redis), worker (Celery). Hot-reload em dev.</div>
+      </div>
+      <div class="task p-high">
+        <div class="task-top"><span class="task-id">SRV-02</span><div class="task-badges"><span class="badge b-infra">YAML/GHA</span><span class="badge b-high">Alta</span></div></div>
+        <div class="task-title">CI/CD pipeline (GitHub Actions)</div>
+        <div class="task-desc">Pipeline de lint, testes, build da imagem Docker e deploy automático em push para main. Secrets via GitHub.</div>
+      </div>
+      <div class="task p-high">
+        <div class="task-top"><span class="task-id">SRV-03</span><div class="task-badges"><span class="badge b-infra">Terraform</span><span class="badge b-high">Alta</span></div></div>
+        <div class="task-title">Infraestrutura cloud (IaC)</div>
+        <div class="task-desc">Terraform para provisionar recursos na Railway, Render ou AWS ECS. Variáveis por ambiente (dev/prod).</div>
+      </div>
+      <div class="task p-high">
+        <div class="task-top"><span class="task-id">SRV-04</span><div class="task-badges"><span class="badge b-sql">PostgreSQL</span><span class="badge b-high">Alta</span></div></div>
+        <div class="task-title">Banco gerenciado + backups</div>
+        <div class="task-desc">PostgreSQL gerenciado (Neon, Supabase ou RDS). Backup automático diário com retenção de 30 dias. Point-in-time recovery.</div>
+      </div>
+      <div class="task p-high">
+        <div class="task-top"><span class="task-id">SRV-05</span><div class="task-badges"><span class="badge b-infra">Redis</span><span class="badge b-high">Alta</span></div></div>
+        <div class="task-title">Redis (cache + fila Celery)</div>
+        <div class="task-desc">Cache de aggregations pesadas. Fila de tasks assíncronas (sync Open Finance, notificações). Redis gerenciado.</div>
+      </div>
+      <div class="task p-mid">
+        <div class="task-top"><span class="task-id">SRV-06</span><div class="task-badges"><span class="badge b-infra">Nginx</span><span class="badge b-mid">Média</span></div></div>
+        <div class="task-title">API Gateway / reverse proxy</div>
+        <div class="task-desc">Nginx ou Traefik como proxy. Roteamento de /api para FastAPI e / para Next.js. SSL termination.</div>
+      </div>
+      <div class="task p-mid">
+        <div class="task-top"><span class="task-id">SRV-07</span><div class="task-badges"><span class="badge b-infra">Infra</span><span class="badge b-mid">Média</span></div></div>
+        <div class="task-title">SSL/TLS e domínio</div>
+        <div class="task-desc">Certificado SSL via Let's Encrypt (Certbot) ou Cloudflare. DNS configurado. HTTPS forçado em produção.</div>
+      </div>
+      <div class="task p-mid">
+        <div class="task-top"><span class="task-id">SRV-08</span><div class="task-badges"><span class="badge b-infra">Infra</span><span class="badge b-mid">Média</span></div></div>
+        <div class="task-title">Rate limiting</div>
+        <div class="task-desc">Limite de requisições por IP e por usuário/tenant. Proteção de rotas públicas (login, register) contra brute-force.</div>
+      </div>
+      <div class="task p-mid">
+        <div class="task-top"><span class="task-id">SRV-09</span><div class="task-badges"><span class="badge b-infra">Infra</span><span class="badge b-mid">Média</span></div></div>
+        <div class="task-title">Storage S3 para exports</div>
+        <div class="task-desc">Bucket S3 (ou Cloudflare R2) para armazenar exports CSV gerados e eventuais uploads de usuário.</div>
+      </div>
+      <div class="task p-mid">
+        <div class="task-top"><span class="task-id">SRV-10</span><div class="task-badges"><span class="badge b-python">Python</span><span class="badge b-mid">Média</span></div></div>
+        <div class="task-title">Monitoramento e alertas</div>
+        <div class="task-desc">Sentry para error tracking (backend + frontend). Logs estruturados com Loki ou CloudWatch. Uptime monitor.</div>
+      </div>
+      <div class="task p-low">
+        <div class="task-top"><span class="task-id">SRV-11</span><div class="task-badges"><span class="badge b-infra">Infra</span><span class="badge b-low">Baixa</span></div></div>
+        <div class="task-title">Secrets manager</div>
+        <div class="task-desc">Gestão de variáveis de ambiente e segredos via Doppler, AWS Secrets Manager ou GitHub Environments.</div>
+      </div>
+      <div class="task p-low">
+        <div class="task-top"><span class="task-id">SRV-12</span><div class="task-badges"><span class="badge b-infra">Infra</span><span class="badge b-low">Baixa</span></div></div>
+        <div class="task-title">Autoscaling e observabilidade</div>
+        <div class="task-desc">Configurar autoscaling por CPU/memória. Prometheus + Grafana ou Datadog para métricas de performance.</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="mt" class="section section-mt">
+    <div class="section-header">
+      <span class="section-title">Multi-tenant</span>
+      <span class="count-badge">9 tasks</span>
+    </div>
+    <div class="tasks">
+      <div class="task p-high">
+        <div class="task-top"><span class="task-id">MT-01</span><div class="task-badges"><span class="badge b-sql">SQL</span><span class="badge b-high">Alta</span></div></div>
+        <div class="task-title">Modelagem tenant_id em todas tabelas</div>
+        <div class="task-desc">Coluna tenant_id (FK para tenants) em todas as entidades. Index composto para queries por tenant. Migrations Alembic.</div>
+      </div>
+      <div class="task p-high">
+        <div class="task-top"><span class="task-id">MT-02</span><div class="task-badges"><span class="badge b-sql">PostgreSQL</span><span class="badge b-high">Alta</span></div></div>
+        <div class="task-title">Row-Level Security (RLS)</div>
+        <div class="task-desc">Habilitar RLS no PostgreSQL para isolamento garantido a nível de banco. Policies por tenant_id para todas as tabelas.</div>
+      </div>
+      <div class="task p-high">
+        <div class="task-top"><span class="task-id">MT-03</span><div class="task-badges"><span class="badge b-python">Python</span><span class="badge b-high">Alta</span></div></div>
+        <div class="task-title">Middleware de isolamento por request</div>
+        <div class="task-desc">Extrair tenant do JWT em cada request. Injetar tenant_id na sessão do banco. Bloquear acesso cross-tenant.</div>
+      </div>
+      <div class="task p-high">
+        <div class="task-top"><span class="task-id">MT-04</span><div class="task-badges"><span class="badge b-python">Python</span><span class="badge b-high">Alta</span></div></div>
+        <div class="task-title">Sistema de planos e limites</div>
+        <div class="task-desc">Free / Pro (3 conexões, R$29) / Premium (ilimitado + PJ + IA, R$49,75). Enforcement de limites por plano em cada endpoint.</div>
+      </div>
+      <div class="task p-high">
+        <div class="task-top"><span class="task-id">MT-05</span><div class="task-badges"><span class="badge b-ts">TypeScript</span><span class="badge b-high">Alta</span></div></div>
+        <div class="task-title">Integração Stripe (billing)</div>
+        <div class="task-desc">Checkout de assinatura, upgrade/downgrade, cancelamento e gestão de pagamentos em atraso via Stripe Billing.</div>
+      </div>
+      <div class="task p-mid">
+        <div class="task-top"><span class="task-id">MT-06</span><div class="task-badges"><span class="badge b-python">Python</span><span class="badge b-mid">Média</span></div></div>
+        <div class="task-title">Webhook Stripe</div>
+        <div class="task-desc">Processar eventos: payment_succeeded, subscription_updated, invoice_payment_failed. Atualizar status do plano em tempo real.</div>
+      </div>
+      <div class="task p-mid">
+        <div class="task-top"><span class="task-id">MT-07</span><div class="task-badges"><span class="badge b-react">React</span><span class="badge b-mid">Média</span></div></div>
+        <div class="task-title">Portal de billing no front-end</div>
+        <div class="task-desc">Tela de Faturamento e Assinatura: plano atual, status, comparativo de planos e redirect para Stripe Customer Portal.</div>
+      </div>
+      <div class="task p-mid">
+        <div class="task-top"><span class="task-id">MT-08</span><div class="task-badges"><span class="badge b-sql">SQL</span><span class="badge b-mid">Média</span></div></div>
+        <div class="task-title">Auditoria por tenant</div>
+        <div class="task-desc">Tabela de audit_log com ação, entidade, user_id, tenant_id e timestamp. Útil para debug e compliance.</div>
+      </div>
+      <div class="task p-low">
+        <div class="task-top"><span class="task-id">MT-09</span><div class="task-badges"><span class="badge b-python">Python</span><span class="badge b-low">Baixa</span></div></div>
+        <div class="task-title">Admin panel interno</div>
+        <div class="task-desc">Dashboard interno para gerenciar tenants, visualizar métricas de uso por plano, ativar/desativar contas e debug de integrações.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function show(id, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+</script>

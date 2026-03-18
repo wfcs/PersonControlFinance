@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh auth:*)",
+      "Bash(where.exe gh:*)",
+      "Read(//c/Program Files/GitHub CLI/**)",
+      "Read(//c/Users/felipedovinhoo/AppData/Local/GitHub CLI/**)",
+      "Bash(\"C:/Program Files/GitHub CLI/gh.exe\" auth status)",
+      "Bash(\"C:/Program Files/GitHub CLI/gh.exe\" repo create wfcs/PersonControlFinanceSim --public --description \"Personal Finance Control - SaaS Application\")",
+      "Bash(\"C:/Program Files/GitHub CLI/gh.exe\" repo delete wfcs/PersonControlFinanceSim --yes)"
+    ]
+  }
+}
