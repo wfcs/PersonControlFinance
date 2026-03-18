@@ -29,6 +29,7 @@ class TenantMiddleware(BaseHTTPMiddleware):
         "/api/v1/auth/register",
         "/api/v1/auth/refresh",
         "/api/v1/auth/logout",
+        "/api/v1/webhooks/pluggy",
     }
 
     async def dispatch(self, request: Request, call_next):  # type: ignore[override]
