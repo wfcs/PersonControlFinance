@@ -1,7 +1,7 @@
 # Plano de Execucao — PersonControlFinance
 
 > Atualizado em: 2026-03-19
-> Total: 53 tasks | Concluidas: 29/53 (55%)
+> Total: 53 tasks | Concluidas: 35/53 (66%)
 
 ---
 
@@ -72,17 +72,19 @@
 
 ---
 
-## Fase 5 — APIs Secundarias (BE-07, BE-08, BE-09, BE-10, BE-11, BE-14)
+## Fase 5 — APIs Secundarias (BE-07, BE-08, BE-09, BE-10, BE-11, BE-14) ✅
 > Recorrencias, fluxo de caixa, projecao, patrimonio, faturas, sync periodico.
 
 | ID     | Task                          | Stack  | Status      |
 |--------|-------------------------------|--------|-------------|
-| BE-07  | Motor de recorrencias         | Python | PENDENTE    |
-| BE-08  | API de fluxo de caixa         | Python | PENDENTE    |
-| BE-09  | API de projecao de saldo      | Python | PENDENTE    |
-| BE-10  | API de patrimonio             | Python | PENDENTE    |
-| BE-11  | API de faturas de cartao      | Python | PENDENTE    |
-| BE-14  | Job de sincronizacao          | Python | PENDENTE    |
+| BE-07  | Motor de recorrencias         | Python | COMPLETO ✅ |
+| BE-08  | API de fluxo de caixa         | Python | COMPLETO ✅ |
+| BE-09  | API de projecao de saldo      | Python | COMPLETO ✅ |
+| BE-10  | API de patrimonio             | Python | COMPLETO ✅ |
+| BE-11  | API de faturas de cartao      | Python | COMPLETO ✅ |
+| BE-14  | Job de sincronizacao          | Python | COMPLETO ✅ |
+
+**Detalhes:** Motor de recorrencias com CRUD + process_due (gera transacoes automaticas) + detect (identifica padroes em historico). Cash flow agrupa receita/despesa por mes. Projecao projeta saldo futuro com base em recorrencias ativas. Patrimonio calcula ativos - passivos por tipo de conta. Faturas de cartao com CRUD + filtros por conta/status. Celery Beat: process_recurrences (diario) + sync_open_finance (horario). python-dateutil para relativedelta. 43 testes passando.
 
 ---
 
@@ -159,8 +161,8 @@
 
 | Area          | Concluidas | Total | %    |
 |---------------|-----------|-------|------|
-| Backend (BE)  | 4/16      | 16    | 25%  |
+| Backend (BE)  | 10/16     | 16    | 63%  |
 | Frontend (FE) | 16/16     | 16    | 100% |
 | Multi-tenant  | 4/9       | 9     | 44%  |
 | Servidor/Infra| 1/12      | 12    | 8%   |
-| **TOTAL**     | **29/53** | **53**| **55%** |
+| **TOTAL**     | **35/53** | **53**| **66%** |
