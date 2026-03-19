@@ -1,7 +1,7 @@
 # Plano de Execucao — PersonControlFinance
 
 > Atualizado em: 2026-03-19
-> Total: 53 tasks | Concluidas: 35/53 (66%)
+> Total: 53 tasks | Concluidas: 38/53 (72%)
 
 ---
 
@@ -88,14 +88,16 @@
 
 ---
 
-## Fase 6 — Billing e Monetizacao (MT-05, MT-06, MT-07)
+## Fase 6 — Billing e Monetizacao (MT-05, MT-06, MT-07) ✅
 > Stripe, webhooks de pagamento, portal de billing.
 
 | ID     | Task                          | Stack      | Status      |
 |--------|-------------------------------|------------|-------------|
-| MT-05  | Integracao Stripe (billing)   | TypeScript | PENDENTE    |
-| MT-06  | Webhook Stripe                | Python     | PENDENTE    |
-| MT-07  | Portal de billing no frontend | React      | PENDENTE    |
+| MT-05  | Integracao Stripe (billing)   | Python     | COMPLETO ✅ |
+| MT-06  | Webhook Stripe                | Python     | COMPLETO ✅ |
+| MT-07  | Portal de billing no frontend | React      | COMPLETO ✅ |
+
+**Detalhes:** Stripe Checkout (subscription mode) + Customer Portal. billing_service.py com create_checkout_session, create_portal_session, handle_webhook_event. Webhook processa customer.subscription.created/updated/deleted e checkout.session.completed, atualiza tenant.plan automaticamente. Frontend plans page conectada com useSubscriptionStatus, useCreateCheckout, useCreatePortal. Tenant model estendido com stripe_customer_id e stripe_subscription_id. 48 testes passando.
 
 ---
 
@@ -163,6 +165,6 @@
 |---------------|-----------|-------|------|
 | Backend (BE)  | 10/16     | 16    | 63%  |
 | Frontend (FE) | 16/16     | 16    | 100% |
-| Multi-tenant  | 4/9       | 9     | 44%  |
+| Multi-tenant  | 7/9       | 9     | 78%  |
 | Servidor/Infra| 1/12      | 12    | 8%   |
-| **TOTAL**     | **35/53** | **53**| **66%** |
+| **TOTAL**     | **38/53** | **53**| **72%** |

@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check, Zap, Crown, Sparkles } from "lucide-react";
+import { Check, Zap, Crown, Sparkles, Loader2 } from "lucide-react";
+import { useSubscriptionStatus, useCreateCheckout, useCreatePortal } from "@/hooks";
 
 type Billing = "mensal" | "anual";
 
@@ -16,9 +18,10 @@ const PLANS = [
     description: "Para quem está começando",
     monthlyPrice: 0,
     annualPrice: 0,
+    monthlyPriceId: "",
+    annualPriceId: "",
     color: "border-gray-200",
     badge: null,
-    current: true,
     features: [
       "Até 2 contas",
       "50 transações/mês",
@@ -41,9 +44,10 @@ const PLANS = [
     description: "Para uso pessoal avançado",
     monthlyPrice: 29.9,
     annualPrice: 24.9,
+    monthlyPriceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_MONTHLY || "",
+    annualPriceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_ANNUAL || "",
     color: "border-blue-500 ring-2 ring-blue-500",
     badge: "Mais popular",
-    current: false,
     features: [
       "Contas ilimitadas",
       "Transações ilimitadas",
@@ -67,9 +71,10 @@ const PLANS = [
     description: "Para famílias e times",
     monthlyPrice: 59.9,
     annualPrice: 49.9,
+    monthlyPriceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_PREMIUM_MONTHLY || "",
+    annualPriceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_PREMIUM_ANNUAL || "",
     color: "border-purple-400",
-    badge: "Em breve",
-    current: false,
+    badge: null,
     features: [
       "Tudo do Pro",
       "Até 5 usuários",
@@ -86,6 +91,25 @@ const PLANS = [
 
 export default function PlansPage() {
   const [billing, setBilling] = useState<Billing>("mensal");
+  const searchParams = useSearchParams();
+  const success = searchParams.get("success");
+  const canceled = searchParams.get("canceled");
+
+  const { data: subscription } = useSubscriptionStatus();
+  const checkout = useCreateCheckout();
+  const portal = useCreatePortal();
+
+  const currentPlan = subscription?.plan || "free";
+
+  const handleUpgrade = (plan: typeof PLANS[number]) => {
+    const priceId = billing === "anual" ? plan.annualPriceId : plan.monthlyPriceId;
+    if (!priceId) return;
+    checkout.mutate({ price_id: priceId });
+  };
+
+  const handleManage = () => {
+    portal.mutate();
+  };
 
   return (
     <div className="space-y-8 p-6">
@@ -93,6 +117,18 @@ export default function PlansPage() {
         <h1 className="text-2xl font-bold tracking-tight">Planos e Preços</h1>
         <p className="mt-1 text-sm text-gray-500">Escolha o plano ideal para você</p>
       </div>
+
+      {/* Success/Cancel messages */}
+      {success && (
+        <div className="mx-auto max-w-md rounded-lg border border-green-200 bg-green-50 p-4 text-center text-sm text-green-700">
+          Assinatura realizada com sucesso! Seu plano será atualizado em instantes.
+        </div>
+      )}
+      {canceled && (
+        <div className="mx-auto max-w-md rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-center text-sm text-yellow-700">
+          Checkout cancelado. Nenhuma cobrança foi feita.
+        </div>
+      )}
 
       {/* Billing toggle */}
       <div className="flex justify-center">
@@ -124,19 +160,23 @@ export default function PlansPage() {
         {PLANS.map((plan) => {
           const price = billing === "anual" ? plan.annualPrice : plan.monthlyPrice;
           const Icon = plan.icon;
+          const isCurrent = currentPlan === plan.id;
+          const isUpgrade = !isCurrent && plan.id !== "free";
+          const isDowngrade = currentPlan !== "free" && plan.id === "free";
 
           return (
             <Card key={plan.id} className={`relative flex flex-col ${plan.color}`}>
               {plan.badge && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Badge
-                    className={`px-3 py-0.5 text-xs ${
-                      plan.badge === "Mais popular"
-                        ? "bg-blue-600 text-white"
-                        : "bg-purple-100 text-purple-700"
-                    }`}
-                  >
+                  <Badge className="bg-blue-600 px-3 py-0.5 text-xs text-white">
                     {plan.badge}
+                  </Badge>
+                </div>
+              )}
+              {isCurrent && (
+                <div className="absolute -top-3 right-4">
+                  <Badge className="bg-green-600 px-3 py-0.5 text-xs text-white">
+                    Plano atual
                   </Badge>
                 </div>
               )}
@@ -189,19 +229,38 @@ export default function PlansPage() {
                 </ul>
 
                 <div className="mt-auto pt-2">
-                  {plan.current ? (
+                  {isCurrent && currentPlan !== "free" ? (
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={handleManage}
+                      disabled={portal.isPending}
+                    >
+                      {portal.isPending ? (
+                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Abrindo...</>
+                      ) : (
+                        "Gerenciar assinatura"
+                      )}
+                    </Button>
+                  ) : isCurrent ? (
                     <Button variant="outline" className="w-full" disabled>
                       Plano atual
                     </Button>
-                  ) : plan.badge === "Em breve" ? (
-                    <Button variant="outline" className="w-full" disabled>
-                      Em breve
+                  ) : isUpgrade ? (
+                    <Button
+                      className={`w-full ${plan.id === "pro" ? "bg-blue-600 hover:bg-blue-700" : "bg-purple-600 hover:bg-purple-700"}`}
+                      onClick={() => handleUpgrade(plan)}
+                      disabled={checkout.isPending}
+                    >
+                      {checkout.isPending ? (
+                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Redirecionando...</>
+                      ) : (
+                        "Fazer upgrade"
+                      )}
                     </Button>
                   ) : (
-                    <Button
-                      className={`w-full ${plan.id === "pro" ? "bg-blue-600 hover:bg-blue-700" : ""}`}
-                    >
-                      Fazer upgrade
+                    <Button variant="outline" className="w-full" disabled>
+                      {isDowngrade ? "Downgrade" : "Selecionar"}
                     </Button>
                   )}
                 </div>

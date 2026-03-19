@@ -18,6 +18,8 @@ class Tenant(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         String(50), default="active", nullable=False
     )
     max_connections: Mapped[int] = mapped_column(Integer, default=2, nullable=False)
+    stripe_customer_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    stripe_subscription_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     # Relationships
     users: Mapped[list[User]] = relationship("User", back_populates="tenant", lazy="selectin")

@@ -4,6 +4,7 @@ from fastapi import APIRouter
 
 from app.api.v1.accounts import router as accounts_router
 from app.api.v1.auth import router as auth_router
+from app.api.v1.billing import router as billing_router
 from app.api.v1.cashflow import router as cashflow_router
 from app.api.v1.categories import router as categories_router
 from app.api.v1.goals import router as goals_router
@@ -25,4 +26,5 @@ api_router.include_router(cashflow_router)
 api_router.include_router(projection_router)
 api_router.include_router(networth_router)
 api_router.include_router(invoices_router)
+api_router.include_router(billing_router)
 api_router.include_router(webhooks_router)

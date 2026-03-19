@@ -51,3 +51,9 @@ export {
   type DashboardSummary,
   type SpendingByCategory,
 } from "./use-dashboard";
+
+export {
+  useSubscriptionStatus,
+  useCreateCheckout,
+  useCreatePortal,
+} from "./use-billing";

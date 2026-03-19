@@ -41,6 +41,14 @@ class Settings(BaseSettings):
     PLUGGY_CLIENT_ID: str = ""
     PLUGGY_CLIENT_SECRET: str = ""
 
+    # Stripe
+    STRIPE_SECRET_KEY: str = ""
+    STRIPE_WEBHOOK_SECRET: str = ""
+    STRIPE_PRICE_PRO_MONTHLY: str = ""
+    STRIPE_PRICE_PRO_ANNUAL: str = ""
+    STRIPE_PRICE_PREMIUM_MONTHLY: str = ""
+    STRIPE_PRICE_PREMIUM_ANNUAL: str = ""
+
     # Testing
     TESTING: bool = False
 
