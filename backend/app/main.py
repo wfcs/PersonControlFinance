@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.router import api_router
 from app.core.config import settings
+from app.core.tenant_middleware import TenantContextMiddleware
 
 
 def create_app() -> FastAPI:
@@ -23,6 +24,9 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # Tenant isolation middleware
+    app.add_middleware(TenantContextMiddleware)
 
     # Routers
     app.include_router(api_router)

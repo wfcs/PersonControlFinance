@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from decimal import Decimal
 
-from sqlalchemy import ForeignKey, Numeric, String
+from sqlalchemy import ForeignKey, Index, Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base, FlexibleUUID, TimestampMixin, UUIDPrimaryKeyMixin
@@ -11,6 +11,9 @@ from app.models.base import Base, FlexibleUUID, TimestampMixin, UUIDPrimaryKeyMi
 
 class Account(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     __tablename__ = "accounts"
+    __table_args__ = (
+        Index("ix_accounts_tenant_id_id", "tenant_id", "id"),
+    )
 
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     type: Mapped[str] = mapped_column(String(50), nullable=False)

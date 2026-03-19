@@ -9,6 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import decode_token
+from app.core.tenant_context import get_current_tenant_id
 from app.db.session import get_session
 from app.models.user import User
 
@@ -53,3 +54,15 @@ async def get_current_user(
             detail="Inactive user",
         )
     return user
+
+
+def require_tenant_id() -> UUID:
+    """Dependency that returns the current tenant_id from context.
+    Raises 403 if no tenant context is set."""
+    tenant_id = get_current_tenant_id()
+    if tenant_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No tenant context available",
+        )
+    return tenant_id

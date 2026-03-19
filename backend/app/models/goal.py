@@ -4,7 +4,7 @@ import uuid
 from datetime import date
 from decimal import Decimal
 
-from sqlalchemy import Date, ForeignKey, Numeric, String
+from sqlalchemy import Date, ForeignKey, Index, Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base, FlexibleUUID, TimestampMixin, UUIDPrimaryKeyMixin
@@ -12,6 +12,9 @@ from app.models.base import Base, FlexibleUUID, TimestampMixin, UUIDPrimaryKeyMi
 
 class Goal(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     __tablename__ = "goals"
+    __table_args__ = (
+        Index("ix_goals_tenant_id_id", "tenant_id", "id"),
+    )
 
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     target_amount: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)

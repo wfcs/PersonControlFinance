@@ -4,7 +4,7 @@ import uuid
 from datetime import date
 from decimal import Decimal
 
-from sqlalchemy import Date, ForeignKey, Numeric, String
+from sqlalchemy import Date, ForeignKey, Index, Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, FlexibleUUID, TimestampMixin, UUIDPrimaryKeyMixin
@@ -12,6 +12,9 @@ from app.models.base import Base, FlexibleUUID, TimestampMixin, UUIDPrimaryKeyMi
 
 class Invoice(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     __tablename__ = "invoices"
+    __table_args__ = (
+        Index("ix_invoices_tenant_id_id", "tenant_id", "id"),
+    )
 
     credit_card_account_id: Mapped[uuid.UUID] = mapped_column(
         FlexibleUUID, ForeignKey("accounts.id"), nullable=False, index=True

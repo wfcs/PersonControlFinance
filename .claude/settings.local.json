@@ -22,7 +22,10 @@
       "Bash(python -m pytest tests/ -v)",
       "Bash(for f:*)",
       "Bash(do sed:*)",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(python -m pytest tests/ -v --tb=short)",
+      "Bash(node -e \"const pkg = require\\(''C:/Users/felipedovinhoo/OneDrive/01_Projetos/02_apps/02_app_fin/frontend/node_modules/next/package.json''\\); console.log\\(pkg.version\\)\")",
+      "Bash(ls \"C:/Users/felipedovinhoo/OneDrive/01_Projetos/02_apps/02_app_fin/frontend/src/app/\\(auth\\)\")"
     ]
   }
 }

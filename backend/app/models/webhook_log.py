@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 
-from sqlalchemy import ForeignKey, String
+from sqlalchemy import ForeignKey, Index, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base, FlexibleJSON, FlexibleUUID, TimestampMixin, UUIDPrimaryKeyMixin
@@ -10,6 +10,9 @@ from app.models.base import Base, FlexibleJSON, FlexibleUUID, TimestampMixin, UU
 
 class WebhookLog(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     __tablename__ = "webhook_logs"
+    __table_args__ = (
+        Index("ix_webhook_logs_tenant_id_id", "tenant_id", "id"),
+    )
 
     source: Mapped[str] = mapped_column(String(100), nullable=False)
     event_type: Mapped[str] = mapped_column(String(100), nullable=False)
