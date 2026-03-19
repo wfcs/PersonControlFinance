@@ -1,7 +1,7 @@
 # Plano de Execucao — PersonControlFinance
 
 > Atualizado em: 2026-03-19
-> Total: 53 tasks | Concluidas: 48/53 (91%)
+> Total: 53 tasks | Concluidas: 53/53 (100%) ✅
 
 ---
 
@@ -131,16 +131,18 @@
 
 ---
 
-## Fase 9 — Extras e Polish (BE-15, BE-16, MT-09, SRV-11, SRV-12)
+## Fase 9 — Extras e Polish (BE-15, BE-16, MT-09, SRV-11, SRV-12) ✅
 > Notificacoes, IA, admin panel, secrets, autoscaling.
 
 | ID     | Task                          | Stack  | Status      |
 |--------|-------------------------------|--------|-------------|
-| BE-15  | Sistema de notificacoes       | Python | PENDENTE    |
-| BE-16  | Assistente de IA (premium)    | Python | PENDENTE    |
-| MT-09  | Admin panel interno           | Python | PENDENTE    |
-| SRV-11 | Secrets manager               | Infra  | PENDENTE    |
-| SRV-12 | Autoscaling e observabilidade | Infra  | PENDENTE    |
+| BE-15  | Sistema de notificacoes       | Python | COMPLETO ✅ |
+| BE-16  | Assistente de IA (premium)    | Python | COMPLETO ✅ |
+| MT-09  | Admin panel interno           | Python | COMPLETO ✅ |
+| SRV-11 | Secrets manager               | Infra  | COMPLETO ✅ |
+| SRV-12 | Autoscaling e observabilidade | Infra  | COMPLETO ✅ |
+
+**Detalhes:** Notification model + service (list, create, mark_as_read, mark_all_as_read) + API endpoints. AI Assistant (rule-based: saldo, gastos, recorrencias, contas) com plan guard (premium only). Admin panel com /admin/stats (tenants, users, txns, plan distribution) e /admin/tenants, protegido por ADMIN_EMAILS. Secrets Manager (Terraform) armazena credenciais do app. ECS Task Definition (Fargate) + Service + Auto Scaling (CPU 70%, Memory 80%, min 1 max 4). CloudWatch log group com retenção 30d. 59 testes passando.
 
 ---
 
@@ -167,8 +169,8 @@
 
 | Area          | Concluidas | Total | %    |
 |---------------|-----------|-------|------|
-| Backend (BE)  | 10/16     | 16    | 63%  |
+| Backend (BE)  | 16/16     | 16    | 100% |
 | Frontend (FE) | 16/16     | 16    | 100% |
-| Multi-tenant  | 8/9       | 9     | 89%  |
-| Servidor/Infra| 10/12     | 12    | 83%  |
-| **TOTAL**     | **48/53** | **53**| **91%** |
+| Multi-tenant  | 9/9       | 9     | 100% |
+| Servidor/Infra| 12/12     | 12    | 100% |
+| **TOTAL**     | **53/53** | **53**| **100%** |

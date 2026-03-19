@@ -49,6 +49,9 @@ class Settings(BaseSettings):
     STRIPE_PRICE_PREMIUM_MONTHLY: str = ""
     STRIPE_PRICE_PREMIUM_ANNUAL: str = ""
 
+    # Admin
+    ADMIN_EMAILS: str = ""
+
     # S3 Export
     S3_BUCKET_EXPORTS: str = ""
     AWS_REGION: str = "sa-east-1"

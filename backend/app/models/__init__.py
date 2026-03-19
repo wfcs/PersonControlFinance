@@ -12,6 +12,7 @@ from app.models.recurrence import Recurrence
 from app.models.plan import Plan
 from app.models.webhook_log import WebhookLog
 from app.models.audit_log import AuditLog
+from app.models.notification import Notification
 
 __all__ = [
     "Base",
@@ -26,4 +27,5 @@ __all__ = [
     "Plan",
     "WebhookLog",
     "AuditLog",
+    "Notification",
 ]

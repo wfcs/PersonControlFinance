@@ -214,6 +214,29 @@ resource "aws_ecr_repository" "api" {
   }
 }
 
+# --- Secrets Manager ---
+
+resource "aws_secretsmanager_secret" "app_secrets" {
+  name = "fincontrol/${var.environment}/app"
+
+  tags = {
+    Environment = var.environment
+    Project     = "fincontrol"
+  }
+}
+
+resource "aws_secretsmanager_secret_version" "app_secrets" {
+  secret_id = aws_secretsmanager_secret.app_secrets.id
+  secret_string = jsonencode({
+    DATABASE_URL          = "postgresql+asyncpg://${aws_db_instance.main.username}:${var.db_password}@${aws_db_instance.main.endpoint}/fincontrol"
+    REDIS_URL             = "rediss://${aws_elasticache_replication_group.main.primary_endpoint_address}:6379/0"
+    SECRET_KEY            = "CHANGE_ME"
+    STRIPE_SECRET_KEY     = ""
+    STRIPE_WEBHOOK_SECRET = ""
+    SENTRY_DSN            = ""
+  })
+}
+
 # --- S3 Bucket for exports ---
 
 resource "aws_s3_bucket" "exports" {
