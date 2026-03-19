@@ -8,7 +8,30 @@ from app.core.config import settings
 from app.core.tenant_middleware import TenantContextMiddleware
 
 
+def _init_sentry() -> None:
+    """Initialize Sentry if DSN is configured."""
+    if settings.SENTRY_DSN:
+        try:
+            import sentry_sdk
+            from sentry_sdk.integrations.fastapi import FastApiIntegration
+            from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
+
+            sentry_sdk.init(
+                dsn=settings.SENTRY_DSN,
+                environment=settings.ENVIRONMENT,
+                traces_sample_rate=0.1,
+                integrations=[
+                    FastApiIntegration(transaction_style="endpoint"),
+                    SqlalchemyIntegration(),
+                ],
+            )
+        except ImportError:
+            pass
+
+
 def create_app() -> FastAPI:
+    _init_sentry()
+
     app = FastAPI(
         title=settings.APP_NAME,
         version=settings.APP_VERSION,

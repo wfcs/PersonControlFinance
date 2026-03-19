@@ -1,7 +1,7 @@
 # Plano de Execucao — PersonControlFinance
 
 > Atualizado em: 2026-03-19
-> Total: 53 tasks | Concluidas: 42/53 (79%)
+> Total: 53 tasks | Concluidas: 48/53 (91%)
 
 ---
 
@@ -115,17 +115,19 @@
 
 ---
 
-## Fase 8 — Seguranca e Hardening (SRV-06 a SRV-10, MT-08)
+## Fase 8 — Seguranca e Hardening (SRV-06 a SRV-10, MT-08) ✅
 > Proxy, SSL, rate limiting, storage, monitoramento, auditoria.
 
 | ID     | Task                          | Stack  | Status      |
 |--------|-------------------------------|--------|-------------|
-| SRV-06 | API Gateway / reverse proxy   | Nginx  | PENDENTE    |
-| SRV-07 | SSL/TLS e dominio             | Infra  | PENDENTE    |
-| SRV-08 | Rate limiting                 | Infra  | PENDENTE    |
-| SRV-09 | Storage S3 para exports       | Infra  | PENDENTE    |
-| SRV-10 | Monitoramento e alertas       | Python | PENDENTE    |
-| MT-08  | Auditoria por tenant          | SQL    | PENDENTE    |
+| SRV-06 | API Gateway / reverse proxy   | Nginx  | COMPLETO ✅ |
+| SRV-07 | SSL/TLS e dominio             | Infra  | COMPLETO ✅ |
+| SRV-08 | Rate limiting                 | Infra  | COMPLETO ✅ |
+| SRV-09 | Storage S3 para exports       | Infra  | COMPLETO ✅ |
+| SRV-10 | Monitoramento e alertas       | Python | COMPLETO ✅ |
+| MT-08  | Auditoria por tenant          | SQL    | COMPLETO ✅ |
+
+**Detalhes:** Nginx reverse proxy (infra/nginx.conf + locations.conf): TLS 1.2/1.3, HSTS, CSP headers, rate limiting (30r/s API, 5r/s auth, 10r/s webhooks). S3 bucket (Terraform) com encryption, lifecycle 30d, public access block. Export service com presigned URLs. Sentry init no main.py com FastAPI + SQLAlchemy integrations. AuditLog model com indexes (tenant_id+created_at, entity_type+entity_id). Audit service log_action + list_audit_logs. API endpoint GET /audit com filtros. 51 testes passando.
 
 ---
 
@@ -167,6 +169,6 @@
 |---------------|-----------|-------|------|
 | Backend (BE)  | 10/16     | 16    | 63%  |
 | Frontend (FE) | 16/16     | 16    | 100% |
-| Multi-tenant  | 7/9       | 9     | 78%  |
-| Servidor/Infra| 5/12      | 12    | 42%  |
-| **TOTAL**     | **42/53** | **53**| **79%** |
+| Multi-tenant  | 8/9       | 9     | 89%  |
+| Servidor/Infra| 10/12     | 12    | 83%  |
+| **TOTAL**     | **48/53** | **53**| **91%** |
