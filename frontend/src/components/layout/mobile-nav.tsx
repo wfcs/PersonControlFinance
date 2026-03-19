@@ -23,6 +23,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { Logo } from "@/components/brand/logo";
 
 const navItems = [
   { label: "Visão Geral", href: "/dashboard", icon: LayoutDashboard },
@@ -50,15 +51,8 @@ export function MobileNav({ open, onOpenChange }: MobileNavProps) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="left" className="w-64 p-0 bg-gray-900 text-white border-r-0">
-        <SheetHeader className="px-6 py-5 border-b border-white/10">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center font-bold text-sm">
-              FC
-            </div>
-            <SheetTitle className="text-white text-lg font-semibold tracking-tight">
-              FinControl
-            </SheetTitle>
-          </div>
+        <SheetHeader className="px-5 py-5 border-b border-white/10">
+          <Logo size="md" variant="full" />
         </SheetHeader>
 
         <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5">
@@ -76,7 +70,7 @@ export function MobileNav({ open, onOpenChange }: MobileNavProps) {
                 className={cn(
                   "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
                   isActive
-                    ? "bg-white/10 font-medium text-white"
+                    ? "bg-brand-600/20 font-medium text-brand-300"
                     : "text-gray-400 hover:text-white hover:bg-white/5"
                 )}
               >

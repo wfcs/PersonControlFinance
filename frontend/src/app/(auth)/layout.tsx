@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Logo } from "@/components/brand/logo";
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
@@ -6,7 +7,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
       {/* Left panel - visible on lg+ */}
       <div className="hidden lg:flex lg:w-1/2 bg-gray-900 text-white flex-col justify-between p-12">
         <div>
-          <span className="text-2xl font-bold tracking-tight">FinControl</span>
+          <Logo size="lg" variant="full" />
         </div>
 
         <div className="space-y-8">
@@ -21,7 +22,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
 
           <ul className="space-y-4">
             <li className="flex items-start gap-3">
-              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-500/20 text-green-400 text-xs font-bold">
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-600/20 text-brand-400 text-xs font-bold">
                 ✓
               </span>
               <div>
@@ -32,7 +33,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
               </div>
             </li>
             <li className="flex items-start gap-3">
-              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-500/20 text-green-400 text-xs font-bold">
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-600/20 text-brand-400 text-xs font-bold">
                 ✓
               </span>
               <div>
@@ -43,7 +44,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
               </div>
             </li>
             <li className="flex items-start gap-3">
-              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-500/20 text-green-400 text-xs font-bold">
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-600/20 text-brand-400 text-xs font-bold">
                 ✓
               </span>
               <div>

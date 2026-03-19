@@ -14,6 +14,7 @@ from app.api.v1.goals import router as goals_router
 from app.api.v1.invoices import router as invoices_router
 from app.api.v1.networth import router as networth_router
 from app.api.v1.notifications import router as notifications_router
+from app.api.v1.open_finance import router as open_finance_router
 from app.api.v1.projection import router as projection_router
 from app.api.v1.recurrences import router as recurrences_router
 from app.api.v1.transactions import router as transactions_router
@@ -33,6 +34,7 @@ api_router.include_router(invoices_router)
 api_router.include_router(notifications_router)
 api_router.include_router(ai_router)
 api_router.include_router(admin_router)
+api_router.include_router(open_finance_router)
 api_router.include_router(audit_router)
 api_router.include_router(billing_router)
 api_router.include_router(webhooks_router)

@@ -27,7 +27,8 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Trash2, Wallet, Building2 } from "lucide-react";
+import { Plus, Trash2, Wallet, Building2, RefreshCw } from "lucide-react";
+import { OpenFinanceSection } from "@/components/open-finance/pluggy-connect-widget";
 
 const ACCOUNT_TYPES: Record<string, string> = {
   checking: "Corrente",
@@ -139,6 +140,8 @@ export default function AccountsPage() {
           </DialogPortal>
         </Dialog>
       </div>
+
+      <OpenFinanceSection />
 
       {isLoading ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
