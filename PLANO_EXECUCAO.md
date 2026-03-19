@@ -1,7 +1,7 @@
 # Plano de Execucao — PersonControlFinance
 
 > Atualizado em: 2026-03-19
-> Total: 53 tasks | Concluidas: 38/53 (72%)
+> Total: 53 tasks | Concluidas: 42/53 (79%)
 
 ---
 
@@ -101,15 +101,17 @@
 
 ---
 
-## Fase 7 — Infra e CI/CD (SRV-02 a SRV-05)
+## Fase 7 — Infra e CI/CD (SRV-02 a SRV-05) ✅
 > Pipeline, banco gerenciado, Redis, infraestrutura cloud.
 
 | ID     | Task                          | Stack      | Status      |
 |--------|-------------------------------|------------|-------------|
-| SRV-02 | CI/CD pipeline (GitHub Actions)| YAML/GHA  | PENDENTE    |
-| SRV-03 | Infraestrutura cloud (IaC)    | Terraform  | PENDENTE    |
-| SRV-04 | Banco gerenciado + backups    | PostgreSQL | PENDENTE    |
-| SRV-05 | Redis (cache + fila Celery)   | Redis      | PENDENTE    |
+| SRV-02 | CI/CD pipeline (GitHub Actions)| YAML/GHA  | COMPLETO ✅ |
+| SRV-03 | Infraestrutura cloud (IaC)    | Terraform  | COMPLETO ✅ |
+| SRV-04 | Banco gerenciado + backups    | PostgreSQL | COMPLETO ✅ |
+| SRV-05 | Redis (cache + fila Celery)   | Redis      | COMPLETO ✅ |
+
+**Detalhes:** CI pipeline (ci.yml): backend tests + lint (ruff) + frontend build + Docker build. Deploy pipeline (deploy.yml): manual dispatch, staging/production, ECR push + ECS deploy. Terraform IaC (infra/): VPC (2 AZs), RDS PostgreSQL 16 (t4g.micro, backup 7d, encrypted), ElastiCache Redis (t4g.micro, TLS), ECS cluster, ECR repo. Docker-compose atualizado com Celery broker/result URLs.
 
 ---
 
@@ -166,5 +168,5 @@
 | Backend (BE)  | 10/16     | 16    | 63%  |
 | Frontend (FE) | 16/16     | 16    | 100% |
 | Multi-tenant  | 7/9       | 9     | 78%  |
-| Servidor/Infra| 1/12      | 12    | 8%   |
-| **TOTAL**     | **38/53** | **53**| **72%** |
+| Servidor/Infra| 5/12      | 12    | 42%  |
+| **TOTAL**     | **42/53** | **53**| **79%** |
