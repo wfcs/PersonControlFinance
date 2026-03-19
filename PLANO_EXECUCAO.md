@@ -1,11 +1,11 @@
 # Plano de Execucao — PersonControlFinance
 
-> Atualizado em: 2026-03-18
-> Total: 53 tasks | Concluidas: 5/53 (9%)
+> Atualizado em: 2026-03-19
+> Total: 53 tasks | Concluidas: 29/53 (55%)
 
 ---
 
-## Fase 1 — Fundacao (BE-01, BE-02, BE-03, FE-01, SRV-01)
+## Fase 1 — Fundacao (BE-01, BE-02, BE-03, FE-01, SRV-01) ✅
 > Estrutura base do projeto. Sem isso, nada roda.
 
 | ID     | Task                          | Stack      | Status      |
@@ -18,41 +18,57 @@
 
 ---
 
-## Fase 2 — Multi-tenant Core (MT-01, MT-02, MT-03, MT-04)
-> Isolamento por tenant e sistema de planos. Precisa estar pronto antes das APIs de negocio.
+## Fase 2 — Multi-tenant Core (MT-01, MT-02, MT-03, MT-04) ✅
+> Isolamento por tenant e sistema de planos.
 
 | ID     | Task                              | Stack      | Status      |
 |--------|-----------------------------------|------------|-------------|
-| MT-01  | tenant_id em todas tabelas        | SQL        | PENDENTE    |
-| MT-02  | Row-Level Security (RLS)          | PostgreSQL | PENDENTE    |
-| MT-03  | Middleware isolamento por request | Python     | PENDENTE    |
-| MT-04  | Sistema de planos e limites       | Python     | PENDENTE    |
+| MT-01  | tenant_id + composite indexes     | SQL        | COMPLETO ✅ |
+| MT-02  | Row-Level Security (RLS)          | PostgreSQL | COMPLETO ✅ |
+| MT-03  | Middleware isolamento por request  | Python     | COMPLETO ✅ |
+| MT-04  | Sistema de planos e limites       | Python     | COMPLETO ✅ |
+
+**Detalhes:** Composite indexes (tenant_id, id) em 7 tabelas. RLS via migration PostgreSQL (skip SQLite). TenantContextMiddleware com ContextVar. Planos free/pro/premium com plan_guard (check_account_limit). 16 testes passando.
 
 ---
 
-## Fase 3 — APIs Core (BE-04, BE-05, BE-06, BE-12, BE-13)
-> CRUD principal + integracao Open Finance.
+## Fase 3 — APIs Core (BE-05, BE-06, BE-12, BE-13) ✅
+> CRUD principal + webhooks. BE-04 (Open Finance) movido para fase futura.
 
 | ID     | Task                          | Stack  | Status      |
 |--------|-------------------------------|--------|-------------|
 | BE-04  | Integracao Open Finance       | Python | PENDENTE    |
-| BE-05  | API de transacoes             | Python | PENDENTE    |
-| BE-06  | Engine de categorizacao       | Python | PENDENTE    |
-| BE-12  | API de categorias e metas     | Python | PENDENTE    |
-| BE-13  | Webhooks Open Finance         | Python | PENDENTE    |
+| BE-05  | API de transacoes             | Python | COMPLETO ✅ |
+| BE-06  | Engine de categorizacao       | Python | COMPLETO ✅ |
+| BE-12  | API de categorias e metas     | Python | COMPLETO ✅ |
+| BE-13  | Webhooks Open Finance         | Python | COMPLETO ✅ |
+
+**Detalhes:** CRUD completo para Accounts (com plan limit check), Transactions (filtros: data, conta, categoria, tipo, valor, busca + paginacao), Categories (com subcategorias parent_id), Goals (com progresso e status). Webhook endpoint POST /webhooks/pluggy com log + dispatch Celery. 30 testes passando.
 
 ---
 
-## Fase 4 — Frontend Core (FE-02, FE-03, FE-04, FE-05, FE-06)
-> Layout, auth e telas principais. Depende das APIs da Fase 3.
+## Fase 4 — Frontend Pages (FE-02 a FE-16) ✅
+> Layout, auth e todas as 16 telas do app.
 
 | ID     | Task                          | Stack      | Status      |
 |--------|-------------------------------|------------|-------------|
-| FE-02  | Layout base e sidebar         | TypeScript | PENDENTE    |
-| FE-03  | Tela de autenticacao          | TypeScript | PENDENTE    |
-| FE-04  | Dashboard — visao geral       | React      | PENDENTE    |
-| FE-05  | Tela de transacoes            | React      | PENDENTE    |
-| FE-06  | Tela de contas (Open Finance) | React      | PENDENTE    |
+| FE-02  | Layout base e sidebar         | TypeScript | COMPLETO ✅ |
+| FE-03  | Tela de autenticacao          | TypeScript | COMPLETO ✅ |
+| FE-04  | Dashboard — visao geral       | React      | COMPLETO ✅ |
+| FE-05  | Tela de transacoes            | React      | COMPLETO ✅ |
+| FE-06  | Tela de contas                | React      | COMPLETO ✅ |
+| FE-07  | Tela de recorrentes           | React      | COMPLETO ✅ |
+| FE-08  | Tela de fluxo de caixa        | React      | COMPLETO ✅ |
+| FE-09  | Tela de faturas               | React      | COMPLETO ✅ |
+| FE-10  | Tela de categorias            | React      | COMPLETO ✅ |
+| FE-11  | Tela de metas financeiras     | React      | COMPLETO ✅ |
+| FE-12  | Tela de projecao de saldo     | React      | COMPLETO ✅ |
+| FE-13  | Tela de patrimonio            | React      | COMPLETO ✅ |
+| FE-14  | Tela de relatorios            | React      | COMPLETO ✅ |
+| FE-15  | Tela de planos e assinatura   | React      | COMPLETO ✅ |
+| FE-16  | Onboarding e convites         | React      | COMPLETO ✅ |
+
+**Detalhes:** 17 componentes shadcn/ui (@base-ui/react). 6 React Query hooks (auth, accounts, transactions, categories, goals, dashboard). Sidebar dark com 12 nav items + Lucide icons. Dashboard com Recharts (LineChart, PieChart). Todas as paginas com dialogs CRUD, filtros, empty states. Build Next.js 16 passando sem erros.
 
 ---
 
@@ -70,23 +86,7 @@
 
 ---
 
-## Fase 6 — Frontend Secundario (FE-07 a FE-14)
-> Telas que consomem as APIs da Fase 5.
-
-| ID     | Task                          | Stack | Status      |
-|--------|-------------------------------|-------|-------------|
-| FE-07  | Tela de recorrentes           | React | PENDENTE    |
-| FE-08  | Tela de fluxo de caixa        | React | PENDENTE    |
-| FE-09  | Tela de faturas               | React | PENDENTE    |
-| FE-10  | Tela de categorias            | React | PENDENTE    |
-| FE-11  | Tela de metas financeiras     | React | PENDENTE    |
-| FE-12  | Tela de projecao de saldo     | React | PENDENTE    |
-| FE-13  | Tela de patrimonio            | React | PENDENTE    |
-| FE-14  | Tela de relatorios            | React | PENDENTE    |
-
----
-
-## Fase 7 — Billing e Monetizacao (MT-05, MT-06, MT-07)
+## Fase 6 — Billing e Monetizacao (MT-05, MT-06, MT-07)
 > Stripe, webhooks de pagamento, portal de billing.
 
 | ID     | Task                          | Stack      | Status      |
@@ -97,7 +97,7 @@
 
 ---
 
-## Fase 8 — Infra e CI/CD (SRV-02 a SRV-05)
+## Fase 7 — Infra e CI/CD (SRV-02 a SRV-05)
 > Pipeline, banco gerenciado, Redis, infraestrutura cloud.
 
 | ID     | Task                          | Stack      | Status      |
@@ -109,7 +109,7 @@
 
 ---
 
-## Fase 9 — Seguranca e Hardening (SRV-06 a SRV-10, MT-08)
+## Fase 8 — Seguranca e Hardening (SRV-06 a SRV-10, MT-08)
 > Proxy, SSL, rate limiting, storage, monitoramento, auditoria.
 
 | ID     | Task                          | Stack  | Status      |
@@ -123,15 +123,13 @@
 
 ---
 
-## Fase 10 — Extras e Polish (BE-15, BE-16, FE-15, FE-16, MT-09, SRV-11, SRV-12)
-> Notificacoes, IA, onboarding, admin panel, secrets, autoscaling.
+## Fase 9 — Extras e Polish (BE-15, BE-16, MT-09, SRV-11, SRV-12)
+> Notificacoes, IA, admin panel, secrets, autoscaling.
 
 | ID     | Task                          | Stack  | Status      |
 |--------|-------------------------------|--------|-------------|
 | BE-15  | Sistema de notificacoes       | Python | PENDENTE    |
 | BE-16  | Assistente de IA (premium)    | Python | PENDENTE    |
-| FE-15  | Tela de planos e assinatura   | React  | PENDENTE    |
-| FE-16  | Onboarding e convites         | React  | PENDENTE    |
 | MT-09  | Admin panel interno           | Python | PENDENTE    |
 | SRV-11 | Secrets manager               | Infra  | PENDENTE    |
 | SRV-12 | Autoscaling e observabilidade | Infra  | PENDENTE    |
@@ -142,9 +140,10 @@
 
 | Camada     | Tecnologia                                         |
 |------------|-----------------------------------------------------|
-| Backend    | Python 3.12 + FastAPI + SQLAlchemy 2.0 async + Celery |
-| Frontend   | Next.js 15 (App Router) + React 19 + Tailwind CSS 4 + shadcn/ui |
+| Backend    | Python 3.14 + FastAPI + SQLAlchemy 2.0 async + Celery |
+| Frontend   | Next.js 16 (App Router) + React 19 + Tailwind CSS 4 + shadcn/ui (base-ui) |
 | State      | Zustand 5 + React Query 5                           |
+| Charts     | Recharts 3                                           |
 | Banco      | PostgreSQL (Supabase/Neon) + Alembic                |
 | Cache/Fila | Redis                                               |
 | Auth       | JWT (access + refresh tokens) + bcrypt              |
@@ -153,3 +152,15 @@
 | CI/CD      | GitHub Actions                                      |
 | Infra      | Docker + docker-compose (dev) / Terraform (prod)    |
 | Monitoring | Sentry + logs estruturados                          |
+
+---
+
+## Progresso por Area
+
+| Area          | Concluidas | Total | %    |
+|---------------|-----------|-------|------|
+| Backend (BE)  | 4/16      | 16    | 25%  |
+| Frontend (FE) | 16/16     | 16    | 100% |
+| Multi-tenant  | 4/9       | 9     | 44%  |
+| Servidor/Infra| 1/12      | 12    | 8%   |
+| **TOTAL**     | **29/53** | **53**| **55%** |
