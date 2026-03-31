@@ -62,6 +62,7 @@ def create_app() -> FastAPI:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.CORS_ORIGINS if settings.ENVIRONMENT == "development" else [
+            "https://person-control-finance.vercel.app",
             "https://fincontrol.com",
             "https://staging.fincontrol.com",
         ],
