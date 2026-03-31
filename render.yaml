@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: fincontrol-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: '["https://fincontrolperson.vercel.app","https://person-control-finance.vercel.app"]'
+      - key: REDIS_URL
+        value: "memory://"
+      - key: CELERY_BROKER_URL
+        value: "memory://"
+      - key: CELERY_RESULT_BACKEND
+        value: "rpc://"
+      - key: PLUGGY_CLIENT_ID
+        sync: false
+      - key: PLUGGY_CLIENT_SECRET
+        sync: false
