@@ -5,15 +5,26 @@ import os
 
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
+from app.core.config import settings
 from app.db.session import get_session
 from app.models.webhook_log import WebhookLog
+
+# Inherit from main app's limiter or create a local one with same config
+storage_uri = settings.REDIS_URL
+if storage_uri.startswith("memory://") or settings.ENVIRONMENT == "development":
+    storage_uri = "memory://"
+
+limiter = Limiter(key_func=get_remote_address, storage_uri=storage_uri)
 
 router = APIRouter(prefix="/webhooks", tags=["Webhooks"])
 logger = logging.getLogger(__name__)
 
 
 @router.post("/pluggy")
+@limiter.limit(settings.RATE_LIMIT_WEBHOOKS)
 async def pluggy_webhook(
     request: Request,
     session: AsyncSession = Depends(get_session),

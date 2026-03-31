@@ -10,18 +10,27 @@ import { useRegister } from "@/hooks/use-auth";
 export default function RegisterPage() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
+  const [cpf, setCpf] = useState("");
   const [password, setPassword] = useState("");
-  const [tenantName, setTenantName] = useState("");
 
   const register = useRegister();
+
+  function formatCPF(value: string) {
+    return value
+      .replace(/\D/g, "")
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d{1,2})/, "$1-$2")
+      .replace(/(-\d{2})\d+?$/, "$1");
+  }
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     register.mutate({
       full_name: fullName,
       email,
+      cpf: cpf.replace(/\D/g, ""),
       password,
-      tenant_name: tenantName,
     });
   }
 
@@ -71,6 +80,18 @@ export default function RegisterPage() {
         </div>
 
         <div className="space-y-1.5">
+          <Label htmlFor="cpf">CPF</Label>
+          <Input
+            id="cpf"
+            type="text"
+            placeholder="000.000.000-00"
+            required
+            value={cpf}
+            onChange={(e) => setCpf(formatCPF(e.target.value))}
+          />
+        </div>
+
+        <div className="space-y-1.5">
           <Label htmlFor="password">Senha</Label>
           <Input
             id="password"
@@ -81,18 +102,6 @@ export default function RegisterPage() {
             minLength={8}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="tenant_name">Nome da empresa</Label>
-          <Input
-            id="tenant_name"
-            type="text"
-            placeholder="Minha Empresa"
-            required
-            value={tenantName}
-            onChange={(e) => setTenantName(e.target.value)}
           />
         </div>
 

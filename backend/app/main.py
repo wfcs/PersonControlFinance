@@ -1,11 +1,26 @@
 from __future__ import annotations
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 from app.api.v1.router import api_router
 from app.core.config import settings
 from app.core.tenant_middleware import TenantContextMiddleware
+
+# Rate Limiter setup
+# Use MemoryStorage if Redis is not available or explicitly disabled
+storage_uri = settings.REDIS_URL
+if storage_uri.startswith("memory://") or settings.ENVIRONMENT == "development":
+    storage_uri = "memory://"
+
+limiter = Limiter(
+    key_func=get_remote_address,
+    storage_uri=storage_uri,
+    default_limits=[settings.RATE_LIMIT_API],
+)
 
 
 def _init_sentry() -> None:
@@ -39,10 +54,17 @@ def create_app() -> FastAPI:
         redoc_url="/redoc",
     )
 
+    # Rate Limiting
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
     # CORS
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.CORS_ORIGINS,
+        allow_origins=settings.CORS_ORIGINS if settings.ENVIRONMENT == "development" else [
+            "https://fincontrol.com",
+            "https://staging.fincontrol.com",
+        ],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

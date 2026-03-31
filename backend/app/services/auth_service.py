@@ -45,15 +45,17 @@ async def register_user(
             detail="Email already registered",
         )
 
-    # Create tenant
-    slug = _slugify(data.tenant_name)
-    tenant = Tenant(name=data.tenant_name, slug=slug)
+    # Create tenant automatically from user name
+    tenant_name = f"Empresa de {data.full_name}"
+    slug = _slugify(tenant_name)
+    tenant = Tenant(name=tenant_name, slug=slug)
     session.add(tenant)
     await session.flush()
 
     # Create user
     user = User(
         email=data.email,
+        cpf=data.cpf,
         full_name=data.full_name,
         hashed_password=hash_password(data.password),
         tenant_id=tenant.id,

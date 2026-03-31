@@ -12,13 +12,11 @@ export interface User {
 
 interface AuthState {
   user: User | null;
-  accessToken: string | null;
-  refreshToken: string | null;
   isAuthenticated: boolean;
 }
 
 interface AuthActions {
-  setAuth: (user: User, accessToken: string, refreshToken: string) => void;
+  setAuth: (user: User) => void;
   setUser: (user: User) => void;
   logout: () => void;
 }
@@ -29,15 +27,11 @@ export const useAuthStore = create<AuthStore>()(
   persist(
     (set) => ({
       user: null,
-      accessToken: null,
-      refreshToken: null,
       isAuthenticated: false,
 
-      setAuth: (user, accessToken, refreshToken) =>
+      setAuth: (user) =>
         set({
           user,
-          accessToken,
-          refreshToken,
           isAuthenticated: true,
         }),
 
@@ -46,8 +40,6 @@ export const useAuthStore = create<AuthStore>()(
       logout: () =>
         set({
           user: null,
-          accessToken: null,
-          refreshToken: null,
           isAuthenticated: false,
         }),
     }),
