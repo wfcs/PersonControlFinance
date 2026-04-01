@@ -39,10 +39,15 @@ class TenantContextMiddleware(BaseHTTPMiddleware):
         if path in PUBLIC_PATHS or path.startswith(PUBLIC_PREFIXES):
             return await call_next(request)
 
-        # Extract tenant_id from JWT
+        # Extract tenant_id from JWT (header or cookie)
+        token = None
         auth_header = request.headers.get("authorization", "")
         if auth_header.startswith("Bearer "):
             token = auth_header[7:]
+        else:
+            token = request.cookies.get("access_token")
+
+        if token:
             try:
                 payload = decode_token(token)
                 tenant_id_str = payload.get("tenant_id")
