@@ -7,8 +7,10 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans), "Quattrocento Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-heading: "Erato", Georgia, "Times New Roman", serif;
+  --font-sans: var(--font-sans), "Mulish", ui-sans-serif, system-ui, sans-serif;
+  --font-heading-h1: var(--font-heading-h1), "Ruda", ui-sans-serif, system-ui, sans-serif;
+  --font-heading-h2: var(--font-heading-h2), "Gentium Plus", Georgia, serif;
+  --font-heading: var(--font-heading-h1), "Ruda", ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, "Cascadia Code", monospace;
 
   /* Brand palette — Emerald/Teal */
@@ -140,8 +142,17 @@
   html {
     @apply font-sans;
   }
-  h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-heading);
+  h1 {
+    font-family: var(--font-heading-h1);
+    font-weight: 700;
+  }
+  h2 {
+    font-family: var(--font-heading-h2);
+    font-weight: 700;
+  }
+  h3, h4, h5, h6 {
+    font-family: var(--font-sans);
+    font-weight: 600;
   }
 }
 

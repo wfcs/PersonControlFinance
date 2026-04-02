@@ -81,7 +81,7 @@ export function Logo({ size = "md", variant = "full", className }: LogoProps) {
             text,
             "font-bold tracking-tight"
           )}
-          style={{ fontFamily: "var(--font-heading)" }}
+          style={{ fontFamily: "var(--font-heading-h1)" }}
         >
           Fin<span className="text-brand-500">Control</span>
         </span>
