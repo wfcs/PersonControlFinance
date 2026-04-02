@@ -103,7 +103,7 @@ export function PluggyConnectButton() {
       <Dialog open={widgetOpen} onOpenChange={setWidgetOpen}>
         <DialogPortal>
           <DialogBackdrop />
-          <DialogContent className="sm:max-w-lg">
+          <DialogContent className="sm:max-w-xl">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <ShieldCheck className="h-5 w-5 text-brand-600" />
@@ -183,7 +183,7 @@ function PluggyWidgetEmbed({
       <iframe
         src={widgetUrl}
         width="100%"
-        height="450"
+        height="550"
         style={{ border: "none" }}
         allow="camera"
         title="Pluggy Connect"
