@@ -38,6 +38,15 @@ async def init():
 
         print("Tables created successfully!")
 
+        # Add missing columns to existing tables (create_all won't do this)
+        async with engine.begin() as conn:
+            await conn.execute(
+                __import__("sqlalchemy").text(
+                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS has_completed_onboarding BOOLEAN NOT NULL DEFAULT FALSE"
+                )
+            )
+        print("Schema migrations applied!")
+
         # Create admin user if not exists
         from sqlalchemy.ext.asyncio import AsyncSession
         from sqlalchemy.orm import sessionmaker
