@@ -58,15 +58,11 @@ def create_app() -> FastAPI:
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-    # CORS
+    # CORS — always use CORS_ORIGINS from settings/env
+    # In production, set CORS_ORIGINS env var to the list of allowed origins
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.CORS_ORIGINS if settings.ENVIRONMENT == "development" else [
-            "https://fincontrolperson.vercel.app",
-            "https://person-control-finance.vercel.app",
-            "https://fincontrol.com",
-            "https://staging.fincontrol.com",
-        ],
+        allow_origins=settings.CORS_ORIGINS,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
