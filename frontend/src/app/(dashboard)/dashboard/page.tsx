@@ -2,14 +2,10 @@
 
 import {
   ResponsiveContainer,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
   PieChart,
   Pie,
   Cell,
+  Tooltip,
 } from "recharts";
 import {
   TrendingUp,
@@ -17,6 +13,7 @@ import {
   Wallet,
   ArrowUpRight,
   ArrowDownRight,
+  BarChart3,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -27,16 +24,6 @@ import {
   useTransactions,
 } from "@/hooks";
 import { formatCurrency, formatDate } from "@/lib/format";
-
-// Mock spending-over-time data for the line chart
-const SPENDING_TREND = [
-  { month: "Out", receitas: 5200, despesas: 3100 },
-  { month: "Nov", receitas: 5400, despesas: 3400 },
-  { month: "Dez", receitas: 6200, despesas: 4200 },
-  { month: "Jan", receitas: 5600, despesas: 3000 },
-  { month: "Fev", receitas: 5700, despesas: 3150 },
-  { month: "Mar", receitas: 5800, despesas: 3260 },
-];
 
 function SummaryCardSkeleton() {
   return (
@@ -67,6 +54,15 @@ function TransactionRowSkeleton() {
   );
 }
 
+function EmptyState({ message }: { message: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-12 text-center">
+      <BarChart3 className="h-10 w-10 text-gray-300 mb-3" />
+      <p className="text-sm text-muted-foreground">{message}</p>
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const { data: summary, isLoading: summaryLoading } = useDashboardSummary();
   const { data: spending, isLoading: spendingLoading } = useSpendingByCategory();
@@ -76,6 +72,10 @@ export default function DashboardPage() {
 
   const resultado = (summary?.totalIncome ?? 0) - (summary?.totalExpenses ?? 0);
   const resultadoPositivo = resultado >= 0;
+  const hasData =
+    (summary?.totalBalance ?? 0) !== 0 ||
+    (summary?.totalIncome ?? 0) !== 0 ||
+    (summary?.totalExpenses ?? 0) !== 0;
 
   return (
     <div className="space-y-6">
@@ -90,7 +90,6 @@ export default function DashboardPage() {
           </>
         ) : (
           <>
-            {/* Saldo Total */}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -108,7 +107,6 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
-            {/* Receitas */}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -124,7 +122,6 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
-            {/* Despesas */}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -140,7 +137,6 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
-            {/* Resultado */}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -161,7 +157,7 @@ export default function DashboardPage() {
                   {formatCurrency(resultado)}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Taxa de poupança: {summary?.savingsRate?.toFixed(1)}%
+                  Taxa de poupança: {summary?.savingsRate?.toFixed(1) ?? "0.0"}%
                 </p>
               </CardContent>
             </Card>
@@ -169,149 +165,78 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Line Chart - Ritmo de gastos */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">
-              Ritmo de gastos
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={220}>
-              <LineChart data={SPENDING_TREND}>
-                <XAxis
-                  dataKey="month"
-                  tick={{ fontSize: 12, fill: "#6b7280" }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis
-                  tick={{ fontSize: 12, fill: "#6b7280" }}
-                  axisLine={false}
-                  tickLine={false}
-                  tickFormatter={(v) =>
-                    new Intl.NumberFormat("pt-BR", {
-                      notation: "compact",
-                      style: "currency",
-                      currency: "BRL",
-                    }).format(v)
-                  }
-                />
-                <Tooltip
-                  formatter={(value, name) => [
-                    formatCurrency(Number(value)),
-                    String(name) === "receitas" ? "Receitas" : "Despesas",
-                  ]}
-                  contentStyle={{
-                    borderRadius: "8px",
-                    border: "1px solid #e5e7eb",
-                    fontSize: "12px",
-                  }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="receitas"
-                  stroke="#10b981"
-                  strokeWidth={2}
-                  dot={false}
-                  activeDot={{ r: 4 }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="despesas"
-                  stroke="#ef4444"
-                  strokeWidth={2}
-                  dot={false}
-                  activeDot={{ r: 4 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-            <div className="flex gap-4 mt-2 justify-center">
-              <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <span className="w-3 h-0.5 bg-emerald-500 inline-block rounded" />
-                Receitas
-              </span>
-              <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <span className="w-3 h-0.5 bg-red-500 inline-block rounded" />
-                Despesas
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Pie Chart - Gastos por categoria */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">
-              Gastos por categoria
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {spendingLoading ? (
-              <div className="flex flex-col items-center gap-3">
-                <Skeleton className="h-40 w-40 rounded-full" />
-                <div className="space-y-2 w-full">
-                  <Skeleton className="h-3 w-full" />
-                  <Skeleton className="h-3 w-full" />
-                  <Skeleton className="h-3 w-3/4" />
-                </div>
+      {/* Spending by category */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm font-medium">
+            Gastos por categoria
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {spendingLoading ? (
+            <div className="flex flex-col items-center gap-3">
+              <Skeleton className="h-40 w-40 rounded-full" />
+              <div className="space-y-2 w-full">
+                <Skeleton className="h-3 w-full" />
+                <Skeleton className="h-3 w-full" />
+                <Skeleton className="h-3 w-3/4" />
               </div>
-            ) : (
-              <>
-                <ResponsiveContainer width="100%" height={160}>
-                  <PieChart>
-                    <Pie
-                      data={spending}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={45}
-                      outerRadius={70}
-                      dataKey="amount"
-                      nameKey="category"
-                    >
-                      {spending?.map((entry, index) => (
-                        <Cell key={index} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      formatter={(value) => [
-                        formatCurrency(Number(value)),
-                        "Valor",
-                      ]}
-                      contentStyle={{
-                        borderRadius: "8px",
-                        border: "1px solid #e5e7eb",
-                        fontSize: "12px",
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-                <ul className="space-y-1.5 mt-2">
-                  {spending?.map((item, index) => (
-                    <li
-                      key={index}
-                      className="flex items-center justify-between text-xs"
-                    >
-                      <span className="flex items-center gap-1.5 text-muted-foreground">
-                        <span
-                          className="w-2 h-2 rounded-full shrink-0"
-                          style={{ backgroundColor: item.color }}
-                        />
-                        {item.category}
-                      </span>
-                      <span className="font-medium">
-                        {item.percentage.toFixed(0)}%
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+            </div>
+          ) : !spending || spending.length === 0 ? (
+            <EmptyState message="Nenhuma despesa categorizada este mês." />
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-center">
+              <ResponsiveContainer width="100%" height={200}>
+                <PieChart>
+                  <Pie
+                    data={spending}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={50}
+                    outerRadius={80}
+                    dataKey="amount"
+                    nameKey="category"
+                  >
+                    {spending.map((entry, index) => (
+                      <Cell key={index} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    formatter={(value) => [
+                      formatCurrency(Number(value)),
+                      "Valor",
+                    ]}
+                    contentStyle={{
+                      borderRadius: "8px",
+                      border: "1px solid #e5e7eb",
+                      fontSize: "12px",
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+              <ul className="space-y-1.5">
+                {spending.map((item, index) => (
+                  <li
+                    key={index}
+                    className="flex items-center justify-between text-xs"
+                  >
+                    <span className="flex items-center gap-1.5 text-muted-foreground">
+                      <span
+                        className="w-2 h-2 rounded-full shrink-0"
+                        style={{ backgroundColor: item.color }}
+                      />
+                      {item.category}
+                    </span>
+                    <span className="font-medium">
+                      {item.percentage.toFixed(0)}%
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Recent Transactions */}
       <Card>
@@ -328,9 +253,7 @@ export default function DashboardPage() {
               ))}
             </div>
           ) : !transactions || transactions.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">
-              Nenhuma transação encontrada.
-            </p>
+            <EmptyState message="Nenhuma transação encontrada." />
           ) : (
             <div className="divide-y">
               {transactions.slice(0, 5).map((tx) => {

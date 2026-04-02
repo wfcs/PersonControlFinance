@@ -1,17 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useCreateAccount } from "@/hooks";
+import { useCompleteOnboarding } from "@/hooks/use-auth";
+import { usePluggyStatus } from "@/hooks/use-open-finance";
+import { PluggyConnectButton } from "@/components/open-finance/pluggy-connect-widget";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import {
-  Select,
-  SelectItem,
-} from "@/components/ui/select";
-import { Wallet, Target, PartyPopper, CheckCircle2, Circle } from "lucide-react";
+  PartyPopper,
+  CheckCircle2,
+  Link2,
+  Target,
+  Circle,
+  ShieldCheck,
+} from "lucide-react";
 
 const FINANCIAL_GOALS = [
   { id: "emergency", label: "Criar reserva de emergência", icon: "🛡️" },
@@ -24,27 +26,17 @@ const FINANCIAL_GOALS = [
   { id: "car", label: "Comprar carro", icon: "🚗" },
 ];
 
-const ACCOUNT_TYPES: Record<string, string> = {
-  checking: "Conta Corrente",
-  savings: "Poupança",
-  investment: "Investimento",
-  cash: "Dinheiro em espécie",
-};
-
 export default function OnboardingPage() {
-  const router = useRouter();
   const [step, setStep] = useState(1);
-  const [accountForm, setAccountForm] = useState({
-    name: "",
-    type: "checking",
-    balance: 0,
-  });
   const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
 
-  const createAccount = useCreateAccount();
+  const completeOnboarding = useCompleteOnboarding();
+  const { data: pluggyStatus, refetch: refetchPluggy } = usePluggyStatus();
 
   const TOTAL_STEPS = 3;
   const progress = ((step - 1) / (TOTAL_STEPS - 1)) * 100;
+
+  const hasConnectedBank = (pluggyStatus?.connected_items ?? 0) > 0;
 
   function toggleGoal(id: string) {
     setSelectedGoals((prev) =>
@@ -52,21 +44,8 @@ export default function OnboardingPage() {
     );
   }
 
-  async function handleCreateAccount(e: React.FormEvent) {
-    e.preventDefault();
-    if (accountForm.name) {
-      await createAccount.mutateAsync({
-        name: accountForm.name,
-        type: accountForm.type,
-        balance: accountForm.balance,
-        currency: "BRL",
-      });
-    }
-    setStep(3);
-  }
-
   function handleFinish() {
-    router.push("/dashboard");
+    completeOnboarding.mutate();
   }
 
   return (
@@ -74,23 +53,39 @@ export default function OnboardingPage() {
       {/* Progress bar */}
       <div className="mb-8">
         <div className="mb-2 flex justify-between text-xs text-gray-400">
-          <span>Passo {step} de {TOTAL_STEPS}</span>
+          <span>
+            Passo {step} de {TOTAL_STEPS}
+          </span>
           <span>{Math.round(progress)}% concluído</span>
         </div>
         <Progress value={progress} className="h-2" />
         <div className="mt-3 flex justify-between">
           {[
             { n: 1, label: "Boas-vindas" },
-            { n: 2, label: "Primeira conta" },
+            { n: 2, label: "Conectar banco" },
             { n: 3, label: "Metas" },
           ].map(({ n, label }) => (
             <div key={n} className="flex flex-col items-center gap-1">
-              <div className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold transition-colors ${
-                n < step ? "bg-green-500 text-white" : n === step ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-400"
-              }`}>
+              <div
+                className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold transition-colors ${
+                  n < step
+                    ? "bg-green-500 text-white"
+                    : n === step
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-100 text-gray-400"
+                }`}
+              >
                 {n < step ? <CheckCircle2 className="h-4 w-4" /> : n}
               </div>
-              <span className={`text-xs ${n === step ? "font-medium text-blue-600" : "text-gray-400"}`}>{label}</span>
+              <span
+                className={`text-xs ${
+                  n === step
+                    ? "font-medium text-blue-600"
+                    : "text-gray-400"
+                }`}
+              >
+                {label}
+              </span>
             </div>
           ))}
         </div>
@@ -105,18 +100,33 @@ export default function OnboardingPage() {
             </div>
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Bem-vindo ao FinApp!</h1>
+            <h1 className="text-2xl font-bold">Bem-vindo ao FinControl!</h1>
             <p className="mt-2 text-gray-500">
-              Vamos configurar sua conta em poucos minutos para que você possa começar a organizar suas finanças.
+              Vamos configurar sua conta em poucos minutos para que você possa
+              começar a organizar suas finanças.
             </p>
           </div>
           <div className="rounded-lg border bg-blue-50 p-4 text-left">
-            <h3 className="mb-2 text-sm font-semibold text-blue-700">O que você vai poder fazer:</h3>
+            <h3 className="mb-2 text-sm font-semibold text-blue-700">
+              O que você vai poder fazer:
+            </h3>
             <ul className="space-y-1.5 text-sm text-blue-600">
-              <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500" /> Acompanhar receitas e despesas</li>
-              <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500" /> Definir e acompanhar metas financeiras</li>
-              <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500" /> Visualizar relatórios e gráficos</li>
-              <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500" /> Projetar seu saldo futuro</li>
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-green-500" /> Importar
+                contas e transações automaticamente
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-green-500" /> Acompanhar
+                receitas e despesas em tempo real
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-green-500" /> Definir e
+                acompanhar metas financeiras
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-green-500" /> Visualizar
+                relatórios e gráficos detalhados
+              </li>
             </ul>
           </div>
           <Button size="lg" className="w-full" onClick={() => setStep(2)}>
@@ -125,64 +135,74 @@ export default function OnboardingPage() {
         </div>
       )}
 
-      {/* Step 2: First account */}
+      {/* Step 2: Connect bank via Open Finance (mandatory) */}
       {step === 2 && (
         <div className="space-y-6">
           <div className="text-center">
             <div className="flex justify-center mb-4">
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-                <Wallet className="h-8 w-8 text-green-600" />
+                <Link2 className="h-8 w-8 text-green-600" />
               </div>
             </div>
-            <h2 className="text-xl font-bold">Adicione sua primeira conta</h2>
+            <h2 className="text-xl font-bold">Conecte seu banco</h2>
             <p className="mt-1 text-sm text-gray-500">
-              Comece cadastrando uma conta bancária ou carteira
+              Conecte sua conta bancária via Open Finance para importar seus
+              dados automaticamente
             </p>
           </div>
 
-          <form onSubmit={handleCreateAccount} className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="acc-name">Nome da conta</Label>
-              <Input
-                id="acc-name"
-                placeholder="Ex: Nubank, Itaú, Carteira..."
-                required
-                value={accountForm.name}
-                onChange={(e) => setAccountForm({ ...accountForm, name: e.target.value })}
-              />
+          <div className="rounded-lg border bg-green-50 p-4">
+            <div className="flex items-start gap-3">
+              <ShieldCheck className="h-5 w-5 text-green-600 mt-0.5 shrink-0" />
+              <div className="text-sm text-green-700">
+                <p className="font-semibold mb-1">Conexão segura</p>
+                <p>
+                  Seus dados são criptografados e protegidos. Usamos a
+                  tecnologia Open Finance regulada pelo Banco Central.
+                </p>
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <Label>Tipo de conta</Label>
-              <Select
-                value={accountForm.type}
-                onChange={(e) => setAccountForm({ ...accountForm, type: e.target.value })}
+          </div>
+
+          {hasConnectedBank ? (
+            <div className="space-y-4">
+              <div className="rounded-lg border border-green-300 bg-green-50 p-4 text-center">
+                <CheckCircle2 className="h-8 w-8 text-green-500 mx-auto mb-2" />
+                <p className="text-sm font-semibold text-green-700">
+                  Banco conectado com sucesso!
+                </p>
+                <p className="text-xs text-green-600 mt-1">
+                  Suas contas e transações estão sendo importadas
+                </p>
+              </div>
+              <Button
+                size="lg"
+                className="w-full"
+                onClick={() => setStep(3)}
               >
-                {Object.entries(ACCOUNT_TYPES).map(([value, label]) => (
-                  <SelectItem key={value} value={value}>{label}</SelectItem>
-                ))}
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="acc-balance">Saldo atual (R$)</Label>
-              <Input
-                id="acc-balance"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="0,00"
-                value={accountForm.balance || ""}
-                onChange={(e) => setAccountForm({ ...accountForm, balance: parseFloat(e.target.value) || 0 })}
-              />
-            </div>
-            <div className="flex gap-3 pt-2">
-              <Button type="button" variant="outline" className="flex-1" onClick={() => setStep(3)}>
-                Pular por agora
-              </Button>
-              <Button type="submit" className="flex-1" disabled={createAccount.isPending}>
-                {createAccount.isPending ? "Salvando..." : "Continuar"}
+                Continuar
               </Button>
             </div>
-          </form>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex justify-center">
+                <PluggyConnectButton />
+              </div>
+              <Button
+                size="lg"
+                variant="ghost"
+                className="w-full text-gray-400"
+                onClick={async () => {
+                  await refetchPluggy();
+                }}
+              >
+                Já conectei, verificar novamente
+              </Button>
+              <p className="text-center text-xs text-gray-400">
+                A conexão bancária é necessária para usar o FinControl
+              </p>
+            </div>
+          )}
         </div>
       )}
 
@@ -216,7 +236,9 @@ export default function OnboardingPage() {
                   }`}
                 >
                   <span className="text-lg">{goal.icon}</span>
-                  <span className="font-medium leading-tight">{goal.label}</span>
+                  <span className="font-medium leading-tight">
+                    {goal.label}
+                  </span>
                   <div className="ml-auto">
                     {selected ? (
                       <CheckCircle2 className="h-4 w-4 text-blue-500" />
@@ -235,8 +257,15 @@ export default function OnboardingPage() {
             </p>
           )}
 
-          <Button size="lg" className="w-full" onClick={handleFinish}>
-            Concluir configuração
+          <Button
+            size="lg"
+            className="w-full"
+            onClick={handleFinish}
+            disabled={completeOnboarding.isPending}
+          >
+            {completeOnboarding.isPending
+              ? "Finalizando..."
+              : "Concluir configuração"}
           </Button>
           <p className="text-center text-xs text-gray-400">
             Você pode ajustar suas metas a qualquer momento nas configurações

@@ -54,5 +54,6 @@ class UserResponse(BaseModel):
     is_active: bool
     is_verified: bool
     tenant_id: UUID
+    has_completed_onboarding: bool = False
 
     model_config = {"from_attributes": True}

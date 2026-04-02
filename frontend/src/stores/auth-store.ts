@@ -8,6 +8,7 @@ export interface User {
   email: string;
   full_name: string;
   tenant_id: string;
+  has_completed_onboarding: boolean;
 }
 
 interface AuthState {

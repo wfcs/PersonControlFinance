@@ -9,6 +9,7 @@ from app.api.v1.audit import router as audit_router
 from app.api.v1.auth import router as auth_router
 from app.api.v1.billing import router as billing_router
 from app.api.v1.cashflow import router as cashflow_router
+from app.api.v1.dashboard import router as dashboard_router
 from app.api.v1.categories import router as categories_router
 from app.api.v1.goals import router as goals_router
 from app.api.v1.invoices import router as invoices_router
@@ -37,4 +38,5 @@ api_router.include_router(admin_router)
 api_router.include_router(open_finance_router)
 api_router.include_router(audit_router)
 api_router.include_router(billing_router)
+api_router.include_router(dashboard_router)
 api_router.include_router(webhooks_router)

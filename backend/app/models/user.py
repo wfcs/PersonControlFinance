@@ -18,6 +18,7 @@ class User(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    has_completed_onboarding: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
         FlexibleUUID, ForeignKey("tenants.id"), nullable=False, index=True
     )

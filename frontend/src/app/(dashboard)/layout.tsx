@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useAuthStore } from "@/stores/auth-store";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
@@ -13,28 +13,40 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const user = useAuthStore((state) => state.user);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
       router.replace("/login");
+      return;
     }
-  }, [isAuthenticated, router]);
+    // Redirect to onboarding if not completed (except if already on onboarding page)
+    if (user && !user.has_completed_onboarding && pathname !== "/onboarding") {
+      router.replace("/onboarding");
+    }
+  }, [isAuthenticated, user, pathname, router]);
 
   if (!isAuthenticated) {
     return null;
   }
 
+  // Onboarding page renders without sidebar/header
+  if (pathname === "/onboarding") {
+    return <>{children}</>;
+  }
+
+  // Block rendering dashboard pages until onboarding is complete
+  if (user && !user.has_completed_onboarding) {
+    return null;
+  }
+
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
-      {/* Desktop sidebar */}
       <Sidebar />
-
-      {/* Mobile nav drawer */}
       <MobileNav open={mobileNavOpen} onOpenChange={setMobileNavOpen} />
-
-      {/* Main content */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <Header onMenuClick={() => setMobileNavOpen(true)} />
         <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>

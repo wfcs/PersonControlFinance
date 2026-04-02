@@ -24,6 +24,7 @@ interface AuthResponse {
     cpf: string;
     full_name: string;
     tenant_id: string;
+    has_completed_onboarding: boolean;
   };
 }
 
@@ -33,13 +34,16 @@ export function useLogin() {
 
   return useMutation({
     mutationFn: async (payload: LoginPayload) => {
-      // O login agora retorna o usuário e seta cookies httpOnly
       const { data } = await api.post<AuthResponse>("/auth/login", payload);
       return data;
     },
     onSuccess: (data) => {
       setAuth(data.user);
-      router.push("/dashboard");
+      if (data.user.has_completed_onboarding) {
+        router.push("/dashboard");
+      } else {
+        router.push("/onboarding");
+      }
     },
   });
 }
@@ -55,6 +59,23 @@ export function useRegister() {
     },
     onSuccess: (data) => {
       setAuth(data.user);
+      router.push("/onboarding");
+    },
+  });
+}
+
+export function useCompleteOnboarding() {
+  const { user, setUser } = useAuthStore();
+  const router = useRouter();
+
+  return useMutation({
+    mutationFn: async () => {
+      await api.post("/dashboard/complete-onboarding");
+    },
+    onSuccess: () => {
+      if (user) {
+        setUser({ ...user, has_completed_onboarding: true });
+      }
       router.push("/dashboard");
     },
   });

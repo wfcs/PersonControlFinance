@@ -2,6 +2,7 @@ export {
   useLogin,
   useRegister,
   useLogout,
+  useCompleteOnboarding,
 } from "./use-auth";
 
 export {
